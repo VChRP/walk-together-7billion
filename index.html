@@ -6,8 +6,19 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 1.8                                          ║
+  ║  Version : 2.0                                          ║
   ║  Date    : 2026-07-04                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.0 — ยกเครื่องระบบ Quiz ทั้งหมด อุดช่องโหว่การโกง     ║
+  ║  1) ไม่เฉลยถูก/ผิดระหว่างทำอีกต่อไป — สรุปคะแนนตอนจบเท่านั้น║
+  ║  2) คละลำดับคำถาม + คละลำดับตัวเลือกในแต่ละข้อทุกครั้ง   ║
+  ║  3) server (getQuestionsRaw_ ใน .gs) เป็นคนตรวจคำตอบเอง  ║
+  ║     ไม่ส่งเฉลยให้ frontend รู้เลยตั้งแต่ต้น (เดิมรั่วผ่าน ║
+  ║     DevTools Network tab เห็นเฉลยล่วงหน้าได้)            ║
+  ║  4) ล็อกสิทธิ์ทำ Quiz ก่อนเห็นคำถามข้อแรก (startQuizAttempt)║
+  ║     กันปัญหา "รีเฟรชแล้วเข้าทำใหม่จนเห็นเฉลยครบทุกข้อ"   ║
+  ║  5) กันยิง API ซ้ำเพิ่มคะแนนไม่จำกัด + เพดานคะแนนสูงสุด  ║
+  ║  6) เพิ่มปุ่ม Admin "รีเซ็ต Quiz รายคน" กรณีติดค้างจริง   ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v1.8 — รวมปุ่มบันทึกปฏิทินเหลือปุ่มเดียว                ║
   ║  ตรวจจับอุปกรณ์อัตโนมัติ: iOS→.ics, อื่นๆ→Google Calendar║
@@ -59,7 +70,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v1.8</title>
+<title>Walk Together : 7 Billion · v2.0</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -555,7 +566,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v1.8</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.0</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -631,6 +642,19 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
       <div class="pts-row" style="margin-bottom:0"><label style="margin:0;font-size:13px;font-weight:600;color:var(--navy)">🔍 QC</label><input type="number" id="pts-QC" min="0" max="100" value="1"><input type="number" id="bon-QC" min="0" max="100" value="0"></div>
     </div>
     <button class="btn btn-navy" onclick="doSaveSettings()" style="margin-bottom:16px;">💾 บันทึกการตั้งค่า</button>
+    <!-- v2.0: รีเซ็ต Quiz รายคน กรณีเน็ตหลุด/รีเฟรชกลางคันจริง (ไม่ได้ตั้งใจโกง) -->
+    <div class="sec-lbl">รีเซ็ต Quiz รายคน (กรณีติดค้าง)</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">ใช้เมื่อผู้เข้าร่วม refresh/หลุดกลางคันแล้วเข้าฐานนั้นไม่ได้อีก — กรอก UID แล้วเลือกฐานที่ต้องการปลดล็อก จะล้างทั้งคะแนนและสถานะเริ่มทำของฐานนั้น</div>
+      <div class="field-single"><input id="reset-quiz-uid" placeholder="กรอก UID ผู้เข้าร่วม" style="text-transform:uppercase;"></div>
+      <select id="reset-quiz-station" style="width:100%;padding:11px;border-radius:14px;border:1.5px solid var(--border2);font-family:inherit;font-size:14px;margin-bottom:10px;background:var(--bg);color:var(--text);">
+        <option value="PR">PR — Production</option>
+        <option value="QA">QA — Quality Assurance</option>
+        <option value="QC">QC — Quality Control</option>
+      </select>
+      <button class="btn btn-navy" onclick="doResetQuizAttempt()">🔓 ปลดล็อกฐานนี้</button>
+      <div id="reset-quiz-msg" style="font-size:12px;margin-top:8px;"></div>
+    </div>
     <div id="qr-popup-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;align-items:flex-end;justify-content:center;">
       <div style="background:#fff;border-radius:22px 22px 0 0;padding:20px 22px 48px;width:100%;max-width:420px;text-align:center;">
         <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;"></div>
@@ -713,7 +737,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
       <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
       <div style="font-size:32px;margin-bottom:10px;">⚠️</div>
       <div style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px;">ก่อนเริ่มทำ Quiz</div>
-      <div style="font-size:14px;color:var(--sub);line-height:1.8;margin-bottom:22px;">เมื่อเริ่มแล้ว <strong>ต้องทำให้จบ</strong><br>ไม่สามารถกดกลับระหว่างทำได้<br>มีเวลา <strong>15 วินาที</strong> ต่อข้อ รวม <strong>5 ข้อ</strong></div>
+      <div style="font-size:14px;color:var(--sub);line-height:1.8;margin-bottom:22px;">เมื่อกดเริ่มแล้ว <strong>ระบบจะล็อกทันที</strong><br>ห้ามรีเฟรช/ปิดหน้าเว็บระหว่างทำ ถ้าออกกลางคันจะกลับมาทำต่อไม่ได้ ต้องติดต่อเจ้าหน้าที่<br>มีเวลา <strong>15 วินาที</strong> ต่อข้อ ระบบจะเฉลยคะแนนเมื่อทำครบทุกข้อ</div>
       <button class="btn btn-navy" onclick="startConfirmedQuiz()" style="margin-bottom:10px;">เข้าใจแล้ว เริ่มทำ Quiz →</button>
       <button class="btn btn-outline" onclick="cancelQuizStart()">← ยกเลิก</button>
     </div>
@@ -730,7 +754,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;">
       <span style="color:var(--sub);">ความคืบหน้า</span>
-      <span id="qa-score" style="color:var(--accent);font-weight:700;">0 คะแนน</span>
+      <span id="qa-score" style="color:var(--muted);font-weight:600;">จะเฉลยคะแนนเมื่อทำครบทุกข้อ</span>
     </div>
     <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:12px;overflow:hidden;">
       <div id="qa-prog" style="height:100%;border-radius:2px;transition:.3s;background:#10b981;width:0%;"></div>
@@ -826,7 +850,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v1.8
+   Walk Together : 7 Billion · v2.0
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -836,8 +860,10 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
    v1.6: เพิ่มข้อความแจ้งประกาศรายชื่อในหน้า Coming Soon
    v1.7: ตัดข้อความประกาศรายชื่อ + เพิ่มนับถอยหลังวัน + ปุ่มปฏิทิน
    v1.8: รวมปุ่มปฏิทินเหลือปุ่มเดียว ตรวจจับอุปกรณ์อัตโนมัติ
+   v2.0: ยกเครื่องระบบ Quiz ทั้งหมด — ไม่เฉลยจนจบ, คละคำถาม/ตัวเลือก,
+         server ตรวจคำตอบเอง, ล็อกกันรีเฟรชโกง, ปุ่ม Admin reset
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='1.8';
+var APP_VERSION='2.0';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -1345,6 +1371,11 @@ function loadHome(onDone){
           if(STATION_MAP[stationId]&&m.scores[k])qzDoneMap[stationId]=true;
         });
       }
+      /* v2.0: restore qzStartedMap — ฐานที่เริ่มทำไว้แล้ว (ไม่ว่าจะจบหรือไม่)
+         ใช้แสดงสถานะ "ติดค้าง ต้องให้ Admin reset" แยกจาก "ทำเสร็จแล้ว" */
+      if(m.quiz_started&&Array.isArray(m.quiz_started)){
+        m.quiz_started.forEach(function(k){if(STATION_MAP[k])qzStartedMap[k]=true;});
+      }
     }
 
     /* FIX-3g: apply stationActive จาก settingsCache (โหลดไว้ตอน splash/แต่ละครั้งที่ดึง getSettings)
@@ -1407,14 +1438,16 @@ function doResetPass(){
 /* ── Station grid ── */
 var currentStationDetail=null;
 var QUIZ_ORDER_HOME=['PR','QA','QC'];
-/* FIX-3e/3f + FIX-12: getStationState
+/* FIX-3e/3f + FIX-12 + v2.0(stuck): getStationState
    - disabled: ฐานที่ admin ปิด
    - done: ทำ quiz เสร็จแล้ว
+   - stuck: เริ่มทำไปแล้วแต่ยังไม่จบ (เช่น refresh กลางคัน) — ต้องให้ Admin reset ถึงจะเข้าใหม่ได้
    - [FIX-12] free mode (quiz_free_mode=true): ทุกฐานที่เปิดอยู่ available พร้อมกัน
    - sequential mode: ต้องผ่านฐานก่อนหน้า (ข้ามฐานที่ปิด) */
 function getStationState(id){
   if(stationActive[id]===false)return 'disabled';
   if(qzDoneMap&&qzDoneMap[id])return 'done';
+  if(qzStartedMap&&qzStartedMap[id])return 'stuck';
   /* [FIX-12] free mode — ทำฐานไหนก่อนก็ได้ */
   if(appSettings.quiz_free_mode)return 'available';
   /* sequential mode — ต้องผ่านฐานก่อนหน้า */
@@ -1428,25 +1461,27 @@ function getStationState(id){
 function renderStations(m){
   document.getElementById('home-stations').innerHTML=STATIONS.map(function(s){
     var state=getStationState(s.id);
-    var isDone=state==='done',isAvail=state==='available',isDisabled=state==='disabled';
+    var isDone=state==='done',isAvail=state==='available',isDisabled=state==='disabled',isStuck=state==='stuck';
     /* FIX-3f: หาชื่อฐานเปิดก่อนหน้า (สำหรับข้อความ lock) โดยข้ามฐานที่ปิด */
     var iHome=QUIZ_ORDER_HOME.indexOf(s.id);var prevId='';
     for(var j=iHome-1;j>=0;j--){if(stationActive[QUIZ_ORDER_HOME[j]]!==false){prevId=QUIZ_ORDER_HOME[j];break;}}
     var onclick=isDisabled?'showStationToast(\'ฐาน '+s.id+' ปิดชั่วคราว — ข้ามไปทำฐานถัดไปได้เลย\')'
+      :isStuck?'showStationToast(\'ฐาน '+s.id+' กำลังทำค้างอยู่ กรุณาติดต่อเจ้าหน้าที่เพื่อปลดล็อก\')'
       :state==='locked'?'showStationToast(\'ต้องผ่านฐาน '+prevId+' ก่อน\')'
       :'openStationDetail(\''+s.id+'\')';
-    /* สี/สไตล์ตาม state (disabled = เทาจาง มี dashed border) */
-    var borderC=isDone?'#86efac':isAvail?'var(--navy)':isDisabled?'var(--border2)':'var(--border)';
-    var bgC=isDone?'#f0fdf4':isAvail?'var(--bg)':isDisabled?'#f4f5f7':'var(--bg2)';
-    var dim=(state==='locked'||isDisabled);
-    return'<div onclick="'+onclick+'" style="border:1.5px '+(isDisabled?'dashed':'solid')+' '+borderC+';background:'+bgC+';border-radius:18px;padding:20px 12px;text-align:center;position:relative;transition:.18s;'+(isAvail?'box-shadow:0 4px 14px rgba(15,34,72,.12);':'')+(dim?'opacity:.55;':'')+(isAvail||isDone?'cursor:pointer;':'cursor:not-allowed;')+'">'
+    /* สี/สไตล์ตาม state (disabled/stuck = เทาจาง มี dashed border) */
+    var borderC=isDone?'#86efac':isAvail?'var(--navy)':(isDisabled||isStuck)?'var(--border2)':'var(--border)';
+    var bgC=isDone?'#f0fdf4':isAvail?'var(--bg)':(isDisabled||isStuck)?'#f4f5f7':'var(--bg2)';
+    var dim=(state==='locked'||isDisabled||isStuck);
+    return'<div onclick="'+onclick+'" style="border:1.5px '+((isDisabled||isStuck)?'dashed':'solid')+' '+borderC+';background:'+bgC+';border-radius:18px;padding:20px 12px;text-align:center;position:relative;transition:.18s;'+(isAvail?'box-shadow:0 4px 14px rgba(15,34,72,.12);':'')+(dim?'opacity:.55;':'')+(isAvail||isDone?'cursor:pointer;':'cursor:not-allowed;')+'">'
       +(isDone?'<div style="position:absolute;top:8px;right:9px;width:20px;height:20px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;">✓</div>':'')
       +(state==='locked'?'<div style="position:absolute;top:8px;right:9px;font-size:12px;color:#cbd5e1;">🔒</div>':'')
       +(isDisabled?'<div style="position:absolute;top:8px;right:9px;font-size:11px;">⏸</div>':'')
+      +(isStuck?'<div style="position:absolute;top:8px;right:9px;font-size:11px;">⚠️</div>':'')
       +'<div style="font-size:36px;margin-bottom:8px;'+(dim?'filter:grayscale(1);opacity:.5;':'')+'">'+s.icon+'</div>'
       +'<div style="font-size:14px;font-weight:700;color:'+(isDone?'#16a34a':isAvail?'var(--navy)':'var(--muted)')+';">'+s.id+'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+s.name+'</div>'
-      +'<div style="font-size:10px;font-weight:600;margin-top:8px;padding:3px 10px;border-radius:20px;display:inline-block;'+(isDone?'background:#dcfce7;color:#16a34a;border:1px solid #86efac;':isAvail?'background:var(--navy);color:#fff;':'background:var(--bg3);color:var(--muted);border:1px solid var(--border);')+'">'+(isDone?'✓ เสร็จ':isAvail?'เข้าได้เลย →':isDisabled?'⏸ ปิดชั่วคราว':'🔒 ล็อก')+'</div>'
+      +'<div style="font-size:10px;font-weight:600;margin-top:8px;padding:3px 10px;border-radius:20px;display:inline-block;'+(isDone?'background:#dcfce7;color:#16a34a;border:1px solid #86efac;':isAvail?'background:var(--navy);color:#fff;':'background:var(--bg3);color:var(--muted);border:1px solid var(--border);')+'">'+(isDone?'✓ เสร็จ':isAvail?'เข้าได้เลย →':isDisabled?'⏸ ปิดชั่วคราว':isStuck?'⚠️ ติดต่อเจ้าหน้าที่':'🔒 ล็อก')+'</div>'
       +'</div>';
   }).join('');
 }
@@ -1900,6 +1935,22 @@ function doSaveSettings(){
   showLoad();
   apiPost({action:'saveSettings',settings:s},function(res){hideLoad();if(res.success){settingsCache=s;adminQrBuilt=false;var ok=document.getElementById('admin-ok');ok.textContent='✅ บันทึกแล้ว';ok.style.display='block';setTimeout(function(){ok.style.display='none';},2000);}});
 }
+/* v2.0: doResetQuizAttempt — Admin ปลดล็อกฐานที่ผู้เข้าร่วมทำติดค้าง
+   (เช่น เน็ตหลุด/รีเฟรชกลางคันจริง ไม่ได้ตั้งใจโกง) */
+function doResetQuizAttempt(){
+  var uid=document.getElementById('reset-quiz-uid').value.trim().toUpperCase();
+  var station=document.getElementById('reset-quiz-station').value;
+  var msg=document.getElementById('reset-quiz-msg');
+  msg.textContent='';
+  if(!uid){msg.style.color='var(--red)';msg.textContent='กรุณากรอก UID';return;}
+  showLoad();
+  apiPost({action:'resetQuizAttempt',uid:uid,station:station},function(res){
+    hideLoad();
+    if(res.error){msg.style.color='var(--red)';msg.textContent=res.error;return;}
+    msg.style.color='var(--green)';msg.textContent='✅ ปลดล็อกฐาน '+station+' ให้ '+(res.full_name||uid)+' แล้ว (คะแนนรวมล่าสุด: '+res.total_score+')';
+    document.getElementById('reset-quiz-uid').value='';
+  });
+}
 function doLogout(){
   if(!confirm('ออกจากระบบ?\nข้อมูลคะแนนของคุณจะยังถูกบันทึกไว้'))return;
   stopSessionPolling();
@@ -1916,10 +1967,21 @@ function doLogout(){
 var QUIZ_ORDER=['PR','QA','QC'];
 var QZ_TIME=15,QZ_BONUS_MAX=5;
 var qzInterval=null,qzTimer=QZ_TIME,qzConfirmed=false,qzSelectedIdx=-1;
-var qzCur=0,qzBaseScore=0,qzBonusScore=0,qzQuestions=[],qzStation='';
+var qzCur=0,qzQuestions=[],qzAnswers=[],qzStation='';
 /* FIX-1 (BUG-08): qzDoneMap ย้ายไปประกาศที่ state block บนสุดแล้ว (ดูคอมเมนต์ที่นั่น) */
+var qzStartedMap={}; /* v2.0: ฐานที่เริ่มทำค้างไว้ (เช่น refresh กลางคัน) — ต้องให้ Admin reset ถึงจะทำใหม่ได้ */
 
 function calcQzBonus(t){return Math.round((t/QZ_TIME)*QZ_BONUS_MAX*10)/10;}
+
+/* v2.0: สุ่มลำดับ array แบบ Fisher-Yates — ใช้คละลำดับคำถามและคละลำดับตัวเลือกในแต่ละข้อ
+   ทำได้อย่างปลอดภัยเพราะตอนนี้ backend ตรวจคำตอบด้วยการเทียบ "ข้อความ" ไม่ใช่ตำแหน่ง/index แล้ว */
+function shuffleArray(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=arr[i];arr[i]=arr[j];arr[j]=t;
+  }
+  return arr;
+}
 
 /* ─────────────────────────────────────────────
    BUG-01 FIX: backToStationFromQuiz()
@@ -1941,22 +2003,21 @@ function backToStationFromQuiz(){
    logic การข้ามฐานที่ถูกปิด (stationActive) ย้ายไปอยู่ใน renderStations()
    + getStationState() ซึ่งเป็น flow จริงที่ user ใช้ (home grid -> detail -> quiz) */
 
+/* v2.0: startQzStation ล็อกสิทธิ์ก่อนเห็นคำถามข้อแรก (startQuizAttempt)
+   กันปัญหา "รีเฟรชแล้วเข้าทำใหม่จนเห็นเฉลยครบทุกข้อ" ที่พบในงานที่แล้ว
+   ถ้าเคยเริ่มมาก่อน (ไม่ว่าจะทำจบหรือไม่) จะเข้าทำซ้ำไม่ได้อีกจนกว่า Admin จะ reset ให้ */
 function startQzStation(station){
-  qzStation=station;qzCur=0;qzBaseScore=0;qzBonusScore=0;
-  /* FIX-6: ลบบรรทัด quiz-select-view ออกแล้ว (element ถูกลบจาก DOM) */
+  qzStation=station;qzCur=0;qzAnswers=[];
   document.getElementById('quiz-active-view').style.display='block';
   document.getElementById('quiz-result-view').style.display='none';
   var s=STATION_MAP[station];
   document.getElementById('qa-station-name').textContent=s.icon+' '+station+' — '+s.name;
   document.getElementById('qa-prog').style.background=s.color||'#10b981';
-  /* [BUG-FIX] แสดง loading state ระหว่างรอคำถามจาก server */
-  document.getElementById('qa-qtext').textContent='กำลังโหลดคำถาม...';
+  document.getElementById('qa-qtext').textContent='กำลังตรวจสอบสิทธิ์...';
   document.getElementById('qa-choices').innerHTML='';
   document.getElementById('qa-confirm').style.display='none';
   document.getElementById('qa-next').disabled=true;document.getElementById('qa-next').style.opacity='.3';
-  /* [v1.8.14] เคลียร์ UI chrome ทั้งหมดที่ค้างจากฐานก่อนหน้า กันปนข้อมูลระหว่างรอโหลด */
   document.getElementById('qa-counter').textContent='—';
-  document.getElementById('qa-score').textContent='0 คะแนน';
   document.getElementById('qa-prog').style.width='0%';
   document.getElementById('qa-qnum').textContent='คำถามที่ 1';
   document.getElementById('qa-result').style.display='none';
@@ -1971,19 +2032,30 @@ function startQzStation(station){
   var bp=document.getElementById('qa-bonus-pill');
   bp.textContent='⚡ +'+QZ_BONUS_MAX.toFixed(1);bp.style.color='#10b981';bp.style.borderColor='#86efac';bp.style.background='#f0fdf4';
   setQzUrgent(false);
-  /* [BUG-FIX] เพิ่ม &t=Date.now() กัน browser cache — เดิมใช้ raw fetch() ไม่มี timestamp
-     ทำให้ได้คำถามเก่าแม้จะอัปเดต sheet แล้ว (ต่างจาก apiGet ที่มี &t= ทุกครั้ง) */
-  fetch(API+'?action=getQuestions&station='+station+'&t='+Date.now())
-    .then(function(r){return r.json();})
-    .then(function(res){
-      qzQuestions=(res&&res.length)?res:[];
-      if(!qzQuestions.length){document.getElementById('qa-qtext').textContent='ไม่พบคำถามในฐานข้อมูล';return;}
-      renderQzQ();
-    })
-    .catch(function(){
-      qzQuestions=[];
-      document.getElementById('qa-qtext').textContent='โหลดคำถามไม่สำเร็จ';
-    });
+  apiPost({action:'startQuizAttempt',uid:currentUid,station:station},function(sres){
+    if(sres.error){
+      qzStartedMap[station]=true;
+      showStationToast(sres.error);
+      go('home');loadHome();
+      return;
+    }
+    document.getElementById('qa-qtext').textContent='กำลังโหลดคำถาม...';
+    /* [BUG-FIX] เพิ่ม &t=Date.now() กัน browser cache */
+    fetch(API+'?action=getQuestions&station='+station+'&t='+Date.now())
+      .then(function(r){return r.json();})
+      .then(function(res){
+        qzQuestions=(res&&res.length)?res:[];
+        if(!qzQuestions.length){document.getElementById('qa-qtext').textContent='ไม่พบคำถามในฐานข้อมูล';return;}
+        /* v2.0: คละลำดับคำถาม + คละลำดับตัวเลือกในแต่ละข้อ */
+        shuffleArray(qzQuestions);
+        qzQuestions.forEach(function(q){if(q.choices)shuffleArray(q.choices);});
+        renderQzQ();
+      })
+      .catch(function(){
+        qzQuestions=[];
+        document.getElementById('qa-qtext').textContent='โหลดคำถามไม่สำเร็จ';
+      });
+  });
 }
 function renderQzQ(){
   var q=qzQuestions[qzCur];
@@ -2007,7 +2079,7 @@ function renderQzQ(){
   document.getElementById('qa-next').disabled=true;document.getElementById('qa-next').style.opacity='.3';
   setQzUrgent(false);
   var L=['A','B','C','D'];
-  document.getElementById('qa-choices').innerHTML=(q.choices||q.c).map(function(c,i){return'<button onclick="selectQzChoice('+i+')" style="background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:10px 13px;font-size:13px;color:var(--navy);cursor:pointer;text-align:left;font-family:inherit;display:flex;align-items:center;gap:9px;transition:.15s;"><div style="width:22px;height:22px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">'+L[i]+'</div><span>'+c+'</span></button>';}).join('');
+  document.getElementById('qa-choices').innerHTML=(q.choices||[]).map(function(c,i){return'<button onclick="selectQzChoice('+i+')" style="background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:10px 13px;font-size:13px;color:var(--navy);cursor:pointer;text-align:left;font-family:inherit;display:flex;align-items:center;gap:9px;transition:.15s;"><div style="width:22px;height:22px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">'+L[i]+'</div><span>'+c+'</span></button>';}).join('');
   qzConfirmed=false;qzSelectedIdx=-1;
   startQzTimer();
 }
@@ -2043,70 +2115,65 @@ function selectQzChoice(i){
   document.getElementById('qa-choices').querySelectorAll('button').forEach(function(c,idx){c.style.borderColor=idx===i?'#2563eb':'var(--border)';c.style.background=idx===i?'#eff6ff':'var(--bg)';c.style.color=idx===i?'#2563eb':'var(--navy)';c.querySelector('div').style.background=idx===i?'#2563eb':'var(--bg2)';c.querySelector('div').style.color=idx===i?'#fff':'';});
   document.getElementById('qa-confirm').style.display='block';
 }
+/* v2.0: ไม่เฉลยถูก/ผิดระหว่างทำอีกต่อไป — แค่บันทึกคำตอบที่เลือกไว้ในเครื่อง
+   ส่งให้ server ตรวจทั้งหมดทีเดียวตอนตอบข้อสุดท้ายเสร็จ (ดู showQzResult)
+   กันปัญหาเดิม: รีเฟรชดูเฉลยทีละข้อจนจำได้ครบทุกข้อ */
 function confirmQuizAnswer(){
   if(qzConfirmed||qzSelectedIdx<0)return;
   qzConfirmed=true;stopQuizTimer();setQzUrgent(false);
   document.getElementById('qa-confirm').style.display='none';
-  var q=qzQuestions[qzCur];var ans=q.ans!=null?q.ans:q.a;var correct=(qzSelectedIdx===ans),bonus=0;
-  document.getElementById('qa-choices').querySelectorAll('button').forEach(function(c,idx){c.onclick=null;c.style.cursor='default';if(idx===ans){c.style.borderColor='#16a34a';c.style.background='#f0fdf4';c.style.color='#16a34a';c.querySelector('div').style.background='#16a34a';c.querySelector('div').style.color='#fff';}else if(idx===qzSelectedIdx){c.style.borderColor='#dc2626';c.style.background='#fef2f2';c.style.color='#dc2626';c.querySelector('div').style.background='#dc2626';c.querySelector('div').style.color='#fff';}else{c.style.borderColor='var(--border)';c.style.background='var(--bg)';}});
-  if(correct){qzBaseScore+=1;bonus=calcQzBonus(qzTimer);qzBonusScore+=bonus;}
-  var totalScore=Math.round((qzBaseScore+qzBonusScore)*10)/10;
-  document.getElementById('qa-score').textContent=totalScore+' คะแนน';
+  var q=qzQuestions[qzCur];
+  qzAnswers[qzCur]={q:q.q,choice:q.choices[qzSelectedIdx],timeLeft:qzTimer};
+  document.getElementById('qa-choices').querySelectorAll('button').forEach(function(c,idx){
+    c.onclick=null;c.style.cursor='default';
+    if(idx===qzSelectedIdx){c.style.borderColor='var(--accent)';c.style.background='var(--blue-light)';c.style.color='var(--accent)';c.querySelector('div').style.background='var(--accent)';c.querySelector('div').style.color='#fff';}
+    else{c.style.opacity='.5';}
+  });
   document.getElementById('qa-timer-lbl').textContent=qzTimer+' วินาที (หยุด)';
   var rr=document.getElementById('qa-result');
-  rr.style.cssText='display:flex;border-radius:11px;padding:10px 13px;margin-bottom:10px;align-items:center;gap:9px;font-size:13px;border:1.5px solid '+(correct?'#86efac':'#fca5a5')+';background:'+(correct?'#f0fdf4':'#fef2f2')+';';
-  rr.innerHTML='<span style="font-size:20px;">'+(correct?'✅':'❌')+'</span><div><div style="font-size:13px;font-weight:600;">'+(correct?'ถูกต้อง! +1':'ไม่ถูกต้อง')+'</div>'+(correct&&bonus>0?'<div style="font-size:11px;color:#10b981;margin-top:1px;">⚡ Bonus +'+bonus.toFixed(1)+'</div>':'')+'</div>';
+  rr.style.cssText='display:flex;border-radius:11px;padding:10px 13px;margin-bottom:10px;align-items:center;gap:9px;font-size:13px;border:1.5px solid var(--border);background:var(--bg2);';
+  rr.innerHTML='<span style="font-size:20px;">✓</span><div style="font-size:13px;font-weight:600;color:var(--navy);">บันทึกคำตอบแล้ว</div>';
   document.getElementById('qa-next').disabled=false;document.getElementById('qa-next').style.opacity='1';
   document.getElementById('qa-next').textContent=qzCur<qzQuestions.length-1?'ข้อถัดไป →':'ดูผลคะแนน →';
 }
 function qzTimeout(){
   qzConfirmed=true;setQzUrgent(false);document.getElementById('qa-confirm').style.display='none';
-  var q=qzQuestions[qzCur];var ans=q.ans!=null?q.ans:q.a;
-  document.getElementById('qa-choices').querySelectorAll('button').forEach(function(c,idx){c.onclick=null;c.style.cursor='default';if(idx===ans){c.style.borderColor='#16a34a';c.style.background='#f0fdf4';c.style.color='#16a34a';}else{c.style.borderColor='var(--border)';c.style.background='var(--bg)';}});
-  var rr=document.getElementById('qa-result');rr.style.cssText='display:flex;border-radius:11px;padding:10px 13px;margin-bottom:10px;align-items:center;gap:9px;font-size:13px;border:1.5px solid #fca5a5;background:#fef2f2;';rr.innerHTML='<span style="font-size:20px;">⏱</span><div style="font-size:13px;font-weight:600;color:#dc2626;">หมดเวลา! ไม่ได้คะแนน</div>';
+  var q=qzQuestions[qzCur];
+  qzAnswers[qzCur]={q:q.q,choice:null,timeLeft:0};
+  document.getElementById('qa-choices').querySelectorAll('button').forEach(function(c){c.onclick=null;c.style.cursor='default';c.style.opacity='.5';});
+  var rr=document.getElementById('qa-result');rr.style.cssText='display:flex;border-radius:11px;padding:10px 13px;margin-bottom:10px;align-items:center;gap:9px;font-size:13px;border:1.5px solid var(--border);background:var(--bg2);';rr.innerHTML='<span style="font-size:20px;">⏱</span><div style="font-size:13px;font-weight:600;color:var(--navy);">หมดเวลา</div>';
   document.getElementById('qa-next').disabled=false;document.getElementById('qa-next').style.opacity='1';document.getElementById('qa-next').textContent=qzCur<qzQuestions.length-1?'ข้อถัดไป →':'ดูผลคะแนน →';
 }
 function nextQuizQ(){qzCur++;if(qzCur>=qzQuestions.length){showQzResult();return;}qzConfirmed=false;qzSelectedIdx=-1;renderQzQ();}
 
 /* ─────────────────────────────────────────────
-   BUG-01 FIX: showQzResult()
-   เปลี่ยนจาก action:'saveQuizDone'
-   เป็น action:'saveQuizScore' + ส่ง base/bonus/total
-   และ callback อัปเดต home-score inline ทันที
+   v2.0: showQzResult() — ส่งคำตอบทั้งหมด (ไม่ใช่คะแนนสำเร็จรูป) ให้ server
+   ตรวจกับเฉลยจริงเองทั้งหมด แล้วค่อยแสดงผลที่ server ส่งกลับมา
+   ปิดช่องโหว่ "ยิง API ตรงใส่คะแนนมั่ว" เพราะ server ไม่เชื่อคะแนนจาก client อีกต่อไป
 ───────────────────────────────────────────── */
 function showQzResult(){
   stopQuizTimer();setQzUrgent(false);
-  qzDoneMap[qzStation]=true;
-  var total=Math.round((qzBaseScore+qzBonusScore)*10)/10;
-
-  /* BUG-01 FIX: ส่งคะแนนจริงไปบันทึกใน sheet */
-  if(currentUid){
-    apiPost({
-      action:'saveQuizScore',       /* เปลี่ยนจาก saveQuizDone */
-      uid:currentUid,
-      station:qzStation,
-      base:qzBaseScore,
-      bonus:qzBonusScore,
-      total:total
-    },function(res){
-      /* อัปเดต home-score และ home-rank ทันทีจาก response */
-      if(res&&res.total_score!=null){
-        var scoreEl=document.getElementById('home-score');
-        if(scoreEl)scoreEl.textContent=res.total_score;
-      }
-      if(res&&res.rank!=null){
-        var rankEl=document.getElementById('home-rank');
-        if(rankEl)rankEl.textContent=res.rank;
-      }
-    });
-  }
-
   document.getElementById('quiz-active-view').style.display='none';
   document.getElementById('quiz-result-view').style.display='block';
-  document.getElementById('qr-score').textContent=total.toFixed(1);
-  document.getElementById('qr-station').textContent='คะแนนจาก '+qzStation+' Quiz';
-  document.getElementById('qr-base').textContent=qzBaseScore;
-  document.getElementById('qr-bonus').textContent=qzBonusScore.toFixed(1);
+  document.getElementById('qr-score').textContent='...';
+  document.getElementById('qr-station').textContent='กำลังตรวจคำตอบ...';
+  document.getElementById('qr-base').textContent='-';
+  document.getElementById('qr-bonus').textContent='-';
+  if(!currentUid)return;
+  apiPost({action:'saveQuizScore',uid:currentUid,station:qzStation,answers:qzAnswers},function(res){
+    if(res.error){
+      showStationToast(res.error);
+      document.getElementById('qr-station').textContent=res.error;
+    }
+    qzDoneMap[qzStation]=true;
+    var total=res.total!=null?res.total:0;
+    document.getElementById('qr-score').textContent=Number(total).toFixed(1);
+    document.getElementById('qr-station').textContent='คะแนนจาก '+qzStation+' Quiz';
+    document.getElementById('qr-base').textContent=res.base!=null?res.base:'-';
+    document.getElementById('qr-bonus').textContent=res.bonus!=null?Number(res.bonus).toFixed(1):'0.0';
+    if(res.total_score!=null){var scoreEl=document.getElementById('home-score');if(scoreEl)scoreEl.textContent=res.total_score;}
+    if(res.rank!=null){var rankEl=document.getElementById('home-rank');if(rankEl)rankEl.textContent=res.rank;}
+  });
 }
 
 /* ── Scan Bonus ── */
