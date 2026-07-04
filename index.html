@@ -6,8 +6,17 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 2.1                                          ║
+  ║  Version : 2.2                                          ║
   ║  Date    : 2026-07-04                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.2 — Admin cleanup + Kick All + แก้บั๊ก kick ไม่ออก    ║
+  ║  - ลบ dead code: หน้า Admin สแกน QR ให้คะแนน (pg-station, ║
+  ║    loadStation, startQR/stopQR, doGiveScore) + Bypass     ║
+  ║    Coming Soon ที่เป็น HTML ตายตัวไม่ทำงานจริง            ║
+  ║  - เพิ่มปุ่ม "Kick All" เคลียร์ session ทุกคนพร้อมกัน     ║
+  ║  - เพิ่มเช็คสถานะทันทีตอนแอปกลับมาอยู่หน้าจอ              ║
+  ║    (visibilitychange) แก้ปัญหา kick ไม่ออกตอนมือถือล็อกจอ ║
+  ║  - Admin เห็น error ชัดเจนถ้า kick ไม่สำเร็จ              ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v2.1 — PERFORMANCE: แก้แอปค้างตอนคนใช้พร้อมกันเยอะ      ║
   ║  (การแก้หลักอยู่ฝั่ง .gs — Cache + Lock + รวมคำสั่งเขียน) ║
@@ -75,7 +84,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v2.1</title>
+<title>Walk Together : 7 Billion · v2.2</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -536,25 +545,8 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 </div>
 
 <!-- STATION (Admin) -->
-<div id="pg-station" class="page">
-  <div style="padding-top:20px">
-    <button class="btn-ghost-sm" onclick="stopQR();go('admin')" style="color:var(--muted);margin-bottom:16px">← Admin</button>
-  </div>
-  <div id="st-banner" class="st-banner">
-    <div id="st-icon" style="font-size:36px;margin-bottom:8px;position:relative;z-index:1"></div>
-    <div id="st-title" style="font-size:19px;font-weight:700;color:#fff;letter-spacing:-.3px;position:relative;z-index:1"></div>
-  </div>
-  <div id="st-err" class="err"></div>
-  <div id="st-ok" class="ok-box"></div>
-  <div id="qr-reader" style="margin-bottom:14px;border-radius:14px;overflow:hidden"></div>
-  <div class="lbl">หรือกรอก UID เอง</div>
-  <div class="field-single"><input id="st-uid" placeholder="กรอก UID" onkeydown="if(event.key==='Enter')doGiveScore()"></div>
-  <button id="st-btn" class="btn btn-navy" onclick="doGiveScore()">ให้คะแนน</button>
-  <div id="st-log-wrap" style="display:none;margin-top:22px">
-    <div class="sec-lbl">บันทึกล่าสุด</div>
-    <div id="st-log"></div>
-  </div>
-</div>
+<!-- v2.2: ลบหน้า pg-station (Admin สแกน QR ให้คะแนน) ออกทั้งหมด
+     เป็น dead code — ไม่มีปุ่มไหนในระบบเรียกเปิดหน้านี้อีกแล้วตั้งแต่ v1.3.0 -->
 
 <!-- ADMIN -->
 <div id="pg-admin" class="page">
@@ -571,7 +563,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.1</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.2</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -607,6 +599,9 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
       </div>
       <div id="member-list-body" style="border-top:1px solid var(--border);overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1),opacity .2s ease;max-height:3000px;opacity:1;">
         <div id="member-filter-row" style="display:flex;gap:5px;padding:9px 14px;overflow-x:auto;border-bottom:1px solid var(--bg2);"></div>
+        <div style="padding:10px 16px;border-bottom:1px solid var(--bg2);">
+          <button onclick="doKickAll()" style="width:100%;font-size:12px;font-weight:600;color:var(--red);background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:8px 10px;cursor:pointer;font-family:inherit;">🚪 Kick All — เคลียร์ session ทุกคนพร้อมกัน</button>
+        </div>
         <div id="admin-list" style="padding:0 16px;"></div>
         <div id="member-more-wrap" style="padding:10px 16px;border-top:1px solid var(--bg2);text-align:center;display:none;">
           <button onclick="loadMoreMembers()" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">ดูเพิ่มเติม ↓</button>
@@ -618,9 +613,8 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
     </div>
   </div>
   <div id="apanel-stations" style="display:none;">
-    <!-- v1.3.0: ลบส่วน "เปิดฐานสแกน QR (ให้คะแนน)" ออกตามคำขอผู้ใช้
-         (ปุ่ม go('station', X) 4 ปุ่ม) — โค้ด pg-station/loadStation/doGiveScore
-         ยังคงอยู่ในระบบเผื่อใช้งานทางอื่น แค่ไม่แสดง entry point นี้ใน Admin แล้ว -->
+    <!-- v1.3.0: ลบปุ่มเข้าหน้า "สแกน QR ให้คะแนน" ออกจาก Admin ตามคำขอผู้ใช้
+         v2.2: ลบโค้ด pg-station/loadStation/doGiveScore ออกทั้งหมดแล้ว (dead code) -->
     <div class="sec-lbl">สถิติประจำฐาน</div>
     <div id="station-stats"><div style="text-align:center;color:var(--muted);padding:22px;font-size:13px;">กำลังโหลด...</div></div>
     <div class="sec-lbl" style="margin-top:16px;">QR Bonus ประจำฐาน</div>
@@ -721,14 +715,8 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
         </label>
       </div>
     </div>
-    <div class="sec-lbl">Bypass Coming Soon</div>
-      <div id="bypass-list-wrap">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bg2);">
-          <div style="font-size:13px;font-weight:600;color:var(--navy);">วัชรพล มีดี</div>
-          <span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:2px 10px;">Bypass</span>
-        </div>
-      </div>
-    </div>
+    <!-- v2.2: ลบ "Bypass Coming Soon" ออก — เดิมเป็น HTML ตายตัวโชว์ชื่อแข็งๆ
+         ไม่ได้ผูกกับ appSettings.bypass_list จริง กดอะไรไม่ได้ ไม่สะท้อนข้อมูลจริงเลย -->
     <!-- [FIX-14] เปิด/ปิด Quiz รายฐาน และ คะแนนแต่ละฐาน ย้ายไปอยู่ tab ฐาน แล้ว -->
   </div>
 </div>
@@ -855,7 +843,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v2.1
+   Walk Together : 7 Billion · v2.2
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -868,8 +856,10 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
    v2.0: ยกเครื่องระบบ Quiz ทั้งหมด — ไม่เฉลยจนจบ, คละคำถาม/ตัวเลือก,
          server ตรวจคำตอบเอง, ล็อกกันรีเฟรชโกง, ปุ่ม Admin reset
    v2.1: Performance — session poll 45s+jitter (แก้หลักอยู่ฝั่ง .gs)
+   v2.2: ลบ dead code (pg-station, Bypass UI) + ปุ่ม Kick All +
+         แก้บั๊ก kick ไม่ออก (visibilitychange + error แสดงชัดเจน)
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='2.1';
+var APP_VERSION='2.2';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -887,7 +877,7 @@ var STATION_MAP={
 };
 /* FIX-6: ลบ STATION_INFO ออกแล้ว — ผู้ใช้เพียงรายเดียวคือ onStationClick() ซึ่งถูกลบไปแล้ว */
 
-var currentStation=null,currentUid=null,currentToken=null,employeeDB=[],settingsCache={};
+var currentUid=null,currentToken=null,employeeDB=[],settingsCache={};
 var appSettings={coming_soon:true,bypass_list:['วัชรพล มีดี'],quiz_order:['PR','QA','QC'],quiz_free_mode:false,eventClosed:false};
 
 /* FIX: merge getAppSettings response อย่างปลอดภัย — กันกรณี backend ส่ง bypass_list
@@ -901,7 +891,7 @@ function applyAppSettings(res){
   if(res.quiz_free_mode!=null)appSettings.quiz_free_mode=res.quiz_free_mode; // [FIX-12]
   if(res.event_closed!=null)appSettings.eventClosed=!!res.event_closed; // [v1.8.16] โหมดปิดกิจกรรม
 }
-var seenPopup={},qrScanner=null,stLog={PR:[],QA:[],QC:[]};
+var seenPopup={};
 var selectedReg=null;
 var EVENT_OPEN=new Date('2026-07-10T09:00:00+07:00');
 
@@ -990,7 +980,6 @@ if('navigation' in window){
 window.addEventListener('popstate',function(){handleBackAttempt();});
 
 function go(page,param){
-  stopQR();
   stopBonusScanner();
   /* [v1.8.16] โหมดปิดกิจกรรม — ถ้าเปิดอยู่ ทุกหน้ายกเว้น admin/admin-login/reset-pass
      จะถูกสลับไปหน้า event-closed อัตโนมัติ ครอบคลุมทุกทางเข้า (session เก่า, bypass, back ฯลฯ) */
@@ -999,7 +988,6 @@ function go(page,param){
   }
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   if(page==='preview'){document.getElementById('pg-preview').classList.add('active');}
-  else if(page==='station'){currentStation=param;loadStation(param);document.getElementById('pg-station').classList.add('active');}
   else if(page==='admin'){loadAdmin();document.getElementById('pg-admin').classList.add('active');}
   else if(page==='register'||page==='login'){
     if(employeeDB.length===0){apiGet('getEmployees',function(res){var e=(res&&res.employees)||[];employeeDB=e.map(function(x){return{fullName:x.fullName,dept:x.dept,position:x.position||'',group:x.group||''};});});}
@@ -1325,21 +1313,28 @@ function afterAuth(){
 /* ── Session polling ──
    v2.1: ยืดจาก 30s → 45s + เพิ่ม jitter สุ่ม ±5s ต่อเครื่อง
    กันปัญหาทุกเครื่องที่ล็อกอินพร้อมกัน (เช่นตอนช่วงลงทะเบียน) poll ตรงจังหวะเดียวกันเป๊ะ
-   ซึ่งทำให้เกิด "แรงกระแทก" เป็นช่วงๆ ทุก 30 วิ แทนที่จะกระจายสม่ำเสมอ */
+   ซึ่งทำให้เกิด "แรงกระแทก" เป็นช่วงๆ ทุก 30 วิ แทนที่จะกระจายสม่ำเสมอ
+   v2.2: แยกตัวเช็คออกมาเป็น checkSessionValidityNow() ใช้ร่วมกับ visibilitychange
+   แก้ปัญหา "kick แล้วไม่หลุด" กรณีมือถือล็อกจอ/สลับแอป — setInterval ถูก OS
+   หยุด/ชะลอตอนอยู่พื้นหลัง ทำให้ไม่เช็คตามรอบ พอกลับมาเปิดแอปจะเช็คทันทีแทนที่ต้องรอ poll รอบถัดไป */
 var pollInterval=null;
+function checkSessionValidityNow(){
+  if(!currentUid||!currentToken)return;
+  apiGet('getMembers',function(res){
+    if(res.error)return;
+    var m=(res.members||[]).find(function(x){return x.uid===currentUid;});
+    if(!m||!m.has_session){stopSessionPolling();showKickNotification();}
+  });
+}
 function startSessionPolling(){
   stopSessionPolling();
   var jitter=Math.floor(Math.random()*10000)-5000; /* ±5 วินาที */
-  pollInterval=setInterval(function(){
-    if(!currentUid||!currentToken)return;
-    apiGet('getMembers',function(res){
-      if(res.error)return;
-      var m=(res.members||[]).find(function(x){return x.uid===currentUid;});
-      if(!m||!m.has_session){stopSessionPolling();showKickNotification();}
-    });
-  },45000+jitter);
+  pollInterval=setInterval(checkSessionValidityNow,45000+jitter);
 }
 function stopSessionPolling(){if(pollInterval){clearInterval(pollInterval);pollInterval=null;}}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible')checkSessionValidityNow();
+});
 function showKickNotification(){var o=document.getElementById('kick-overlay');if(o)o.style.display='flex';}
 /* [FIX-11] dismissKick — reload แทน clearSession()+goPreview()
    page reload → re-verify session จาก localStorage → กลับ home อัตโนมัติ
@@ -1567,7 +1562,7 @@ function openStationQuiz(){
      เก็บ id ไว้ใน _pendingQuizStation รอ user กดยืนยัน */
   _pendingQuizStation=id;
   closeStationDetail();
-  stopQR();stopBonusScanner();
+  stopBonusScanner();
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.getElementById('pg-quiz').classList.add('active');
   document.getElementById('quiz-active-view').style.display='none';
@@ -1609,33 +1604,8 @@ function openStationScan(){scanBonusStation=currentStationDetail;closeStationDet
 function dismissPopup(){seenPopup[document.getElementById('popup-btn').dataset.stId]=true;document.getElementById('st-popup').style.display='none';}
 function closePopup(e){if(e.target===e.currentTarget)dismissPopup();}
 
-/* ── Station admin give score ── */
-function loadStation(id){
-  var s=STATIONS.find(function(x){return x.id===id;});
-  var b=document.getElementById('st-banner');b.style.background='linear-gradient(135deg,'+s.color+','+s.accent+')';
-  document.getElementById('st-icon').textContent=s.icon;document.getElementById('st-title').textContent='ฐาน '+s.id+' — '+s.label;
-  document.getElementById('st-btn').style.background=s.color;document.getElementById('st-uid').value='';
-  document.getElementById('st-err').style.display='none';document.getElementById('st-ok').style.display='none';
-  renderLog(id);startQR();
-}
-function startQR(){if(qrScanner)return;try{qrScanner=new Html5Qrcode('qr-reader');qrScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:200,height:200}},function(decoded){document.getElementById('st-uid').value=decoded;doGiveScore();},function(){}).catch(function(){qrScanner=null;});}catch(e){qrScanner=null;}}
-function stopQR(){if(qrScanner){try{qrScanner.stop().then(function(){qrScanner=null;});}catch(e){qrScanner=null;}}}
-function doGiveScore(){
-  var uid=document.getElementById('st-uid').value.trim().toUpperCase();
-  var errEl=document.getElementById('st-err'),okEl=document.getElementById('st-ok');
-  errEl.style.display='none';okEl.style.display='none';
-  if(!uid){showErr(errEl,'กรุณากรอก UID');return;}
-  showLoad();
-  apiPost({action:'giveScore',uid:uid,station:currentStation},function(res){
-    hideLoad();
-    if(res.error){showErr(errEl,res.error);return;}
-    okEl.textContent='✅ '+res.full_name+' +'+res.pts+' pts · รวม '+res.total_score+' pts';okEl.style.display='block';
-    stLog[currentStation].unshift({name:res.full_name,pts:res.pts,time:new Date().toLocaleTimeString('th-TH')});
-    if(stLog[currentStation].length>5)stLog[currentStation].pop();
-    document.getElementById('st-uid').value='';renderLog(currentStation);
-  });
-}
-function renderLog(id){var logs=stLog[id],wrap=document.getElementById('st-log-wrap');if(!logs.length){wrap.style.display='none';return;}wrap.style.display='block';document.getElementById('st-log').innerHTML=logs.map(function(l){return'<div class="log-row"><span style="font-weight:500">'+l.name+'</span><span style="color:var(--green);font-weight:600">+'+l.pts+' · '+l.time+'</span></div>';}).join('');}
+/* v2.2: ลบ loadStation/startQR/stopQR/doGiveScore/renderLog ออกทั้งหมด
+   เป็น dead code คู่กับหน้า pg-station ที่ถูกลบไปแล้ว (ไม่มีจุดเรียกใช้งานในระบบ) */
 
 /* ── Admin ── */
 var adminQrBuilt=false;
@@ -1830,7 +1800,18 @@ function goPreview(){
   if(lbl)lbl.textContent='กำลังโหลด...';
   selectedReg=null;go('preview');startPreviewRing(3);
 }
-function doKickSession(uid,name){if(!confirm('Kick session ของ '+name+'?\nคนนี้จะถูกออกจากระบบและเข้าใหม่ได้'))return;showLoad();apiPost({action:'kickSession',uid:uid},function(res){hideLoad();if(res.success)loadAdmin();});}
+function doKickSession(uid,name){if(!confirm('Kick session ของ '+name+'?\nคนนี้จะถูกออกจากระบบและเข้าใหม่ได้'))return;showLoad();apiPost({action:'kickSession',uid:uid},function(res){hideLoad();if(res.error){alert('❌ Kick ไม่สำเร็จ: '+res.error);return;}loadAdmin();});}
+/* v2.2: Kick All — เคลียร์ session ทุกคนในครั้งเดียว ใช้ตอนต้องการเริ่มรอบใหม่/เคลียร์ทั้งหมด */
+function doKickAll(){
+  if(!confirm('Kick All — เคลียร์ session ของทุกคนพร้อมกัน?\nทุกคนที่ออนไลน์อยู่จะถูกออกจากระบบ (ข้อมูลคะแนนไม่หาย เข้าใหม่ได้ตามปกติ)'))return;
+  showLoad();
+  apiPost({action:'kickAllSessions'},function(res){
+    hideLoad();
+    if(res.error){alert('❌ Kick All ไม่สำเร็จ: '+res.error);return;}
+    alert('✅ เคลียร์ session ทั้งหมดแล้ว ('+res.count+' คน)');
+    loadAdmin();
+  });
+}
 function switchAdminTab(t){
   ['overview','members','stations','settings'].forEach(function(n){var panel=document.getElementById('apanel-'+n);var tab=document.getElementById('atab-'+n);if(panel)panel.style.display=n===t?'block':'none';if(tab)tab.classList.toggle('active',n===t);});
   if(t==='overview'||t==='members')loadAdmin();
