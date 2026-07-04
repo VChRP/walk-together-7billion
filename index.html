@@ -6,8 +6,13 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 2.2                                          ║
+  ║  Version : 2.3                                          ║
   ║  Date    : 2026-07-04                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.3 — จำกัดจำนวนผู้ลงทะเบียนสูงสุด 60 คน                ║
+  ║  - ซ่อนตัวนับยอดผู้ลงทะเบียนในหน้า Coming Soon           ║
+  ║  - ครบ 60 คน → ปิดรับอัตโนมัติ ขึ้นหน้า "ปิดรับลงทะเบียน  ║
+  ║    แล้ว" พร้อมข้อความขอบคุณ+ขออภัย (บล็อกจริงที่ backend) ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v2.2 — Admin cleanup + Kick All + แก้บั๊ก kick ไม่ออก    ║
   ║  - ลบ dead code: หน้า Admin สแกน QR ให้คะแนน (pg-station, ║
@@ -84,7 +89,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v2.2</title>
+<title>Walk Together : 7 Billion · v2.3</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -421,8 +426,9 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
         </div>
       </div>
     </div>
-    <!-- [FIX-8] ยอดผู้ลงทะเบียน — โหลดจาก loadComingSoonCount() ตอนแสดงหน้านี้ -->
-    <div id="cs-reg-wrap" style="text-align:center;margin-bottom:16px;opacity:0;transition:opacity .5s;">
+    <!-- v2.3: ซ่อนตัวนับยอดผู้ลงทะเบียนตามคำขอ (เดิม [FIX-8] แสดงยอดจาก loadComingSoonCount())
+         คง element ไว้เผื่อเปิดกลับมาใช้ภายหลัง แค่ display:none ถาวร -->
+    <div id="cs-reg-wrap" style="display:none;text-align:center;margin-bottom:16px;opacity:0;transition:opacity .5s;">
       <div style="display:inline-flex;align-items:baseline;gap:6px;background:var(--bg2);border:1.5px solid var(--border);border-radius:20px;padding:9px 20px;">
         <span id="cs-reg-count" style="font-size:20px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;">—</span>
         <span style="font-size:13px;color:var(--sub);">คน ลงทะเบียนแล้ว</span>
@@ -441,6 +447,18 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
     <div style="font-size:26px;font-weight:700;color:var(--navy);letter-spacing:-.5px;margin-bottom:6px;">ขอบคุณมากครับ</div>
     <div style="font-size:13px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:18px;">Walk Together : 7 Billion</div>
     <div style="font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:32px;max-width:320px;">ขอบคุณทุกท่านที่สละเวลามาร่วมกิจกรรมในวันนี้<br>หวังว่าทุกคนจะได้รับความรู้และความสนุก</div>
+    <button class="btn-ghost-sm" style="color:var(--muted);font-size:11px;opacity:.5;" onclick="go('admin-login')">เข้าสู่ระบบ Admin</button>
+  </div>
+</div>
+
+<!-- v2.3: REGISTRATION FULL — แสดงเมื่อผู้ลงทะเบียนครบจำนวนที่กำหนด (MAX_REGISTRATIONS ใน .gs)
+     ตรวจจาก registerOnly/enterSession ที่ตอบ error:'full' หรือ loadComingSoonCount() นับแล้วครบ -->
+<div id="pg-reg-full" class="page">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;">
+    <div style="font-size:52px;margin-bottom:14px;">🙏</div>
+    <div style="font-size:24px;font-weight:700;color:var(--navy);letter-spacing:-.5px;margin-bottom:10px;">ปิดรับลงทะเบียนแล้ว</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:10px;max-width:320px;">ขอบคุณทุกท่านที่ให้ความสนใจกิจกรรม<br><strong style="color:var(--navy);">Walk Together : 7 Billion</strong> เป็นอย่างมาก 🙏</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:32px;max-width:320px;">ขณะนี้มีผู้ลงทะเบียนครบจำนวนที่กำหนดแล้ว<br>ต้องขออภัยในความไม่สะดวกมา ณ ที่นี้</div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:11px;opacity:.5;" onclick="go('admin-login')">เข้าสู่ระบบ Admin</button>
   </div>
 </div>
@@ -563,7 +581,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.2</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.3</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -843,7 +861,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v2.2
+   Walk Together : 7 Billion · v2.3
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -858,8 +876,9 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
    v2.1: Performance — session poll 45s+jitter (แก้หลักอยู่ฝั่ง .gs)
    v2.2: ลบ dead code (pg-station, Bypass UI) + ปุ่ม Kick All +
          แก้บั๊ก kick ไม่ออก (visibilitychange + error แสดงชัดเจน)
+   v2.3: จำกัดผู้ลงทะเบียนสูงสุด 60 คน + ซ่อนตัวนับ + หน้าปิดรับสมัคร
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='2.2';
+var APP_VERSION='2.3';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -1103,16 +1122,18 @@ function updateCountdown(){
   }
 }
 
-/* [FIX-8] loadComingSoonCount — แสดงยอดผู้ลงทะเบียนในหน้า Coming Soon
-   ถูกเรียกจาก go('coming') ทุกครั้ง */
+/* [FIX-8] loadComingSoonCount — เดิมแสดงยอดผู้ลงทะเบียนในหน้า Coming Soon
+   v2.3: ซ่อนตัวเลขตามคำขอ แต่ยังใช้ตรวจว่าครบจำนวนที่กำหนดหรือยัง
+   ถ้าครบ (MAX_REG_DISPLAY) → สลับไปหน้า "ปิดรับลงทะเบียนแล้ว" แทนหน้านับถอยหลัง
+   ค่านี้ใช้แค่ตัดสินใจแสดงผลฝั่ง UI เท่านั้น การบล็อกจริงอยู่ที่ backend (MAX_REGISTRATIONS) */
+var MAX_REG_DISPLAY=60;
 function loadComingSoonCount(){
-  var wrap=document.getElementById('cs-reg-wrap');
-  var el=document.getElementById('cs-reg-count');
   apiGet('getMembers',function(res){
     if(res.error||!res.members)return;
     var count=res.members.length;
-    if(el)el.textContent=count;
-    if(wrap)wrap.style.opacity='1';
+    if(count>=MAX_REG_DISPLAY){
+      go('reg-full');
+    }
   });
 }
 
@@ -1264,6 +1285,7 @@ function confirmEnter(){
     var isBypass=(appSettings.bypass_list||[]).indexOf(fullName)>=0;
     if(appSettings.coming_soon&&!isBypass){
       apiPost({action:'registerOnly',full_name:fullName,department:dept},function(res){
+        if(res.error==='full'){hideEntryLoading();go('reg-full');return;}
         if(res.error){hideEntryLoading();document.getElementById('entry-panel').style.transform='translateY(0)';showErr(errEl,res.error);return;}
         currentUid=res.uid;currentToken=null;  /* ไม่มี session ตอน coming soon */
         document.getElementById('reg-name').value='';document.getElementById('reg-dept-pill').style.display='none';selectedReg=null;
@@ -1274,6 +1296,7 @@ function confirmEnter(){
     }
     /* เปิดงานปกติ (หรือ bypass) → สร้าง session ตามเดิม */
     apiPost({action:'enterSession',full_name:fullName,department:dept},function(res){
+      if(res.error==='full'){hideEntryLoading();go('reg-full');return;}
       if(res.error==='session_active'){hideEntryLoading();document.getElementById('entry-panel').style.transform='translateY(0)';showBlockedPopup(res.full_name,res.department);return;}
       if(res.error){hideEntryLoading();document.getElementById('entry-panel').style.transform='translateY(0)';showErr(errEl,res.error);return;}
       currentUid=res.uid;currentToken=res.token;saveSession(res.uid,res.token);
