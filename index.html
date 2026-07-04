@@ -6,8 +6,13 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 2.0                                          ║
+  ║  Version : 2.1                                          ║
   ║  Date    : 2026-07-04                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.1 — PERFORMANCE: แก้แอปค้างตอนคนใช้พร้อมกันเยอะ      ║
+  ║  (การแก้หลักอยู่ฝั่ง .gs — Cache + Lock + รวมคำสั่งเขียน) ║
+  ║  ฝั่ง HTML: ยืด session poll 30s→45s + jitter สุ่ม ±5s   ║
+  ║  กันทุกเครื่อง poll พร้อมกันเป๊ะจนเกิด spike             ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v2.0 — ยกเครื่องระบบ Quiz ทั้งหมด อุดช่องโหว่การโกง     ║
   ║  1) ไม่เฉลยถูก/ผิดระหว่างทำอีกต่อไป — สรุปคะแนนตอนจบเท่านั้น║
@@ -70,7 +75,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v2.0</title>
+<title>Walk Together : 7 Billion · v2.1</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -566,7 +571,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.0</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.1</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -850,7 +855,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v2.0
+   Walk Together : 7 Billion · v2.1
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -862,8 +867,9 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
    v1.8: รวมปุ่มปฏิทินเหลือปุ่มเดียว ตรวจจับอุปกรณ์อัตโนมัติ
    v2.0: ยกเครื่องระบบ Quiz ทั้งหมด — ไม่เฉลยจนจบ, คละคำถาม/ตัวเลือก,
          server ตรวจคำตอบเอง, ล็อกกันรีเฟรชโกง, ปุ่ม Admin reset
+   v2.1: Performance — session poll 45s+jitter (แก้หลักอยู่ฝั่ง .gs)
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='2.0';
+var APP_VERSION='2.1';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -1316,10 +1322,14 @@ function afterAuth(){
   });
 }
 
-/* ── Session polling ── */
+/* ── Session polling ──
+   v2.1: ยืดจาก 30s → 45s + เพิ่ม jitter สุ่ม ±5s ต่อเครื่อง
+   กันปัญหาทุกเครื่องที่ล็อกอินพร้อมกัน (เช่นตอนช่วงลงทะเบียน) poll ตรงจังหวะเดียวกันเป๊ะ
+   ซึ่งทำให้เกิด "แรงกระแทก" เป็นช่วงๆ ทุก 30 วิ แทนที่จะกระจายสม่ำเสมอ */
 var pollInterval=null;
 function startSessionPolling(){
   stopSessionPolling();
+  var jitter=Math.floor(Math.random()*10000)-5000; /* ±5 วินาที */
   pollInterval=setInterval(function(){
     if(!currentUid||!currentToken)return;
     apiGet('getMembers',function(res){
@@ -1327,7 +1337,7 @@ function startSessionPolling(){
       var m=(res.members||[]).find(function(x){return x.uid===currentUid;});
       if(!m||!m.has_session){stopSessionPolling();showKickNotification();}
     });
-  },30000);
+  },45000+jitter);
 }
 function stopSessionPolling(){if(pollInterval){clearInterval(pollInterval);pollInterval=null;}}
 function showKickNotification(){var o=document.getElementById('kick-overlay');if(o)o.style.display='flex';}
