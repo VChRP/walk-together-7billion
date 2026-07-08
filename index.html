@@ -6,8 +6,17 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 2.4                                          ║
-  ║  Date    : 2026-07-04                                   ║
+  ║  Version : 2.5                                          ║
+  ║  Date    : 2026-07-06                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.5 — QR Bonus หลายตัวต่อฐาน + คำถาม Survey พิมพ์ตอบ    ║
+  ║  1) ฐานที่ต้องการ QR bonus มากกว่า 1 อัน (เช่น QA=2 QR)   ║
+  ║     ตั้งค่าได้ที่ Admin → แท็บฐาน (stepper "จำนวน QR      ║
+  ║     Bonus") แต่ละ QR สแกนผ่านปุ่มเดิม แยกกันเด็ดขาด       ║
+  ║     สแกนซ้ำแต่ละอันไม่ได้ ต้องครบทุกอันถึงนับว่าฐานเสร็จ  ║
+  ║  2) เพิ่มคำถาม Survey แบบพิมพ์ตอบ (ไม่บังคับกรอก) —      ║
+  ║     กำหนดในชีต survey ด้วยค่าพิเศษ choice_a =            ║
+  ║     "__TEXT__:ป้าย1,ป้าย2" ระบบจะวาดกล่องข้อความให้เอง   ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v2.4 — เพิ่ม toggle "มี Quiz" / "มีสแกนโบนัส" แยกอิสระ  ║
   ║  ต่อฐาน (Admin → แท็บฐาน) ใช้กับฐานที่ไม่ต้องการ Quiz     ║
@@ -96,7 +105,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v2.4</title>
+<title>Walk Together : 7 Billion · v2.5</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -588,7 +597,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.4</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.5</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -868,7 +877,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v2.4
+   Walk Together : 7 Billion · v2.5
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -885,8 +894,10 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
          แก้บั๊ก kick ไม่ออก (visibilitychange + error แสดงชัดเจน)
    v2.3: จำกัดผู้ลงทะเบียนสูงสุด 60 คน + ซ่อนตัวนับ + หน้าปิดรับสมัคร
    v2.4: toggle "มี Quiz"/"มีสแกนโบนัส" แยกอิสระต่อฐาน
+   v2.5: QR bonus หลายตัวต่อฐาน (stepper ใน Admin) + คำถาม Survey
+         แบบพิมพ์ตอบ (__TEXT__: ใน choice_a ของชีต survey)
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='2.4';
+var APP_VERSION='2.5';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -927,7 +938,7 @@ var EVENT_OPEN=new Date('2026-07-10T09:00:00+07:00');
    ซึ่งอยู่ข้างบน — พึ่ง var hoisting ทำให้ไม่ error แต่เปราะบางมาก
    ถ้าใครเปลี่ยนเป็น let/const จะพังเงียบทันที จึงย้ายมาไว้ตรงนี้ให้ชัดเจน */
 var qzDoneMap={}; // {PR:true, QA:true, ...} ฐานที่ user ทำ quiz เสร็จแล้ว
-var bonusDoneMap={}; // v2.4: {PR:true, ...} ฐานที่ user สแกนรับโบนัสแล้ว
+var bonusScores={}; // v2.5: ทุก key ที่มี "_bonus" จาก m.scores เช่น {QA_bonus_1:5, PR_bonus:3}
 var surveyDone=false; // restored from doc4 — true เมื่อ user ส่งแบบประเมินแล้ว
 var scanBonusStation=null; // [FIX-9] ฐานที่ user เปิดหน้าสแกน — ต้องตรงกับ QR ที่สแกน
 
@@ -941,6 +952,9 @@ var stationActive={PR:true,QA:true,QC:true};
    default เปิดหมด (true) เพื่อ backward compatible กับ settings เก่าที่ยังไม่มี field นี้ */
 var stationHasQuiz={PR:true,QA:true,QC:true};
 var stationHasScan={PR:true,QA:true,QC:true};
+/* v2.5: stationBonusCount — จำนวน QR bonus ย่อยของแต่ละฐาน (default 1)
+   เช่น QA=2 หมายถึงมี QR แยกกัน 2 อัน สแกนได้อันละครั้ง ไม่ซ้ำกัน */
+var stationBonusCount={PR:1,QA:1,QC:1};
 
 /* FIX-4: helper สร้าง key คะแนนใน scores object ให้ตรง schema ของ sheet ("{station}_quiz")
    รวม suffix "_quiz" ที่เคย hardcode กระจาย 3 จุด (loadHome/loadStationStats/member chip)
@@ -1411,9 +1425,9 @@ function loadHome(onDone){
         Object.keys(m.scores).forEach(function(k){
           var stationId=k.replace(/_quiz$/,'');
           if(STATION_MAP[stationId]&&m.scores[k])qzDoneMap[stationId]=true;
-          /* v2.4: ฐานที่สแกนรับโบนัสแล้ว เก็บ key เป็น "{station}_bonus" */
-          var bonusStationId=k.replace(/_bonus$/,'');
-          if(k.indexOf('_bonus')>-1&&STATION_MAP[bonusStationId])bonusDoneMap[bonusStationId]=true;
+          /* v2.5: เก็บทุก key ที่มี "_bonus" ไว้ดิบๆ ใช้กับ getStationBonusProgress()
+             รองรับทั้ง "{station}_bonus" (ฐานที่มี QR เดียว) และ "{station}_bonus_{n}" (หลายอัน) */
+          if(k.indexOf('_bonus')>-1)bonusScores[k]=m.scores[k];
         });
       }
       /* v2.0: restore qzStartedMap — ฐานที่เริ่มทำไว้แล้ว (ไม่ว่าจะจบหรือไม่)
@@ -1431,6 +1445,8 @@ function loadHome(onDone){
       /* v2.4: apply stationHasQuiz/stationHasScan เช่นเดียวกัน */
       stationHasQuiz[id]=(st&&st.hasQuiz!=null)?(st.hasQuiz!==false):true;
       stationHasScan[id]=(st&&st.hasScan!=null)?(st.hasScan!==false):true;
+      /* v2.5: apply stationBonusCount */
+      stationBonusCount[id]=(st&&st.bonusCount!=null)?(parseInt(st.bonusCount)||1):1;
     });
 
     var sorted=members.slice().sort(function(a,b){return b.total_score-a.total_score;});
@@ -1489,14 +1505,30 @@ function doResetPass(){
 /* ── Station grid ── */
 var currentStationDetail=null;
 var QUIZ_ORDER_HOME=['PR','QA','QC'];
+/* v2.5: getStationBonusProgress — คืนจำนวน QR bonus ที่สแกนแล้ว/ทั้งหมดของฐานนั้น
+   รองรับทั้งฐานที่มี QR เดียว (key เดิม "{station}_bonus") และหลายอัน ("{station}_bonus_{n}") */
+function getStationBonusProgress(id){
+  var count=stationBonusCount[id]||1;
+  var done=0;
+  for(var i=1;i<=count;i++){
+    var key=count>1?(id+'_bonus_'+i):(id+'_bonus');
+    if(bonusScores[key]!==undefined)done++;
+  }
+  return {done:done,total:count};
+}
+function isBonusFullyDone(id){
+  var p=getStationBonusProgress(id);
+  return p.done>=p.total;
+}
 /* v2.4: isStationFullyDone — ฐานนี้ "เสร็จสมบูรณ์" หรือยัง
    คำนวณจากกิจกรรมที่ "เปิดใช้งานอยู่จริง" เท่านั้น (hasQuiz/hasScan)
-   เช่น ฐานที่ปิด Quiz ไว้ จะนับว่าเสร็จจากการสแกนโบนัสอย่างเดียวก็พอ */
+   เช่น ฐานที่ปิด Quiz ไว้ จะนับว่าเสร็จจากการสแกนโบนัสอย่างเดียวก็พอ
+   v2.5: ฐานที่มี QR bonus หลายอัน ต้องสแกนครบทุกอันถึงจะนับว่าเสร็จ */
 function isStationFullyDone(id){
   var needQuiz=stationHasQuiz[id]!==false;
   var needScan=stationHasScan[id]!==false;
   var quizOk=!needQuiz||!!qzDoneMap[id];
-  var scanOk=!needScan||!!bonusDoneMap[id];
+  var scanOk=!needScan||isBonusFullyDone(id);
   return quizOk&&scanOk;
 }
 /* FIX-3e/3f + FIX-12 + v2.0(stuck): getStationState
@@ -1567,11 +1599,12 @@ function openStationDetail(id){
   var hasQuiz=stationHasQuiz[id]!==false;
   var hasScan=stationHasScan[id]!==false;
   var qzDone=!!(qzDoneMap&&qzDoneMap[id]);
-  var bonusDone=!!(bonusDoneMap&&bonusDoneMap[id]);
+  var bonusProg=getStationBonusProgress(id);
+  var bonusDone=isBonusFullyDone(id);
   document.getElementById('std-title').textContent='ฐาน '+id+' — '+s.name;
   var subParts=[];
   if(hasQuiz)subParts.push(qzDone?'Quiz เสร็จแล้ว ✓':'ยังไม่ทำ Quiz');
-  if(hasScan)subParts.push(bonusDone?'รับโบนัสแล้ว ✓':'ยังไม่รับโบนัส');
+  if(hasScan)subParts.push(bonusDone?'รับโบนัสแล้ว ✓':(bonusProg.total>1?('สแกนแล้ว '+bonusProg.done+'/'+bonusProg.total):'ยังไม่รับโบนัส'));
   document.getElementById('std-sub').textContent=subParts.length?subParts.join(' · '):'กำลังดำเนินการ';
   document.getElementById('std-icon').textContent=s.icon;
   var stampEl=document.getElementById('std-stamp');
@@ -1616,8 +1649,8 @@ function openStationDetail(id){
     } else {
       scanCard.onclick=function(){openStationScan();};
       scanCard.style.cssText='background:linear-gradient(135deg,#1e40af,#2563eb);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;color:#fff;';
-      scanTitle.textContent='สแกน QR รับ Bonus';
-      scanSub.textContent='รับได้ 1 ครั้ง · สแกนจาก QR ของเจ้าหน้าที่ฐาน '+id;scanSub.style.opacity='.75';
+      scanTitle.textContent=bonusProg.total>1?'สแกน QR รับ Bonus ('+bonusProg.done+'/'+bonusProg.total+')':'สแกน QR รับ Bonus';
+      scanSub.textContent=bonusProg.total>1?('มี QR ทั้งหมด '+bonusProg.total+' อัน · สแกนจาก QR ของเจ้าหน้าที่ฐาน '+id):('รับได้ 1 ครั้ง · สแกนจาก QR ของเจ้าหน้าที่ฐาน '+id);scanSub.style.opacity='.75';
     }
   }
   document.getElementById('st-detail-overlay').style.display='block';
@@ -1692,7 +1725,7 @@ function confirmQuitQuiz(){
 function openStationScan(){
   var id=currentStationDetail;
   if(stationHasScan[id]===false){showStationToast('ฐาน '+id+' ไม่มีสแกนรับโบนัส');closeStationDetail();return;}
-  if(bonusDoneMap[id]){showStationToast('✓ รับโบนัสฐาน '+id+' แล้ว');closeStationDetail();return;}
+  if(isBonusFullyDone(id)){showStationToast('✓ รับโบนัสฐาน '+id+' แล้ว');closeStationDetail();return;}
   scanBonusStation=currentStationDetail;closeStationDetail();go('scan-bonus');
 }
 
@@ -1744,7 +1777,9 @@ function loadAdmin(){
     stationActive[id]=(st&&st.active!=null)?(st.active!==false):true;
     /* v2.4: โหลดสถานะ hasQuiz/hasScan ต่อฐานเช่นเดียวกัน */
     stationHasQuiz[id]=(st&&st.hasQuiz!=null)?(st.hasQuiz!==false):true;
-    stationHasScan[id]=(st&&st.hasScan!=null)?(st.hasScan!==false):true;});
+    stationHasScan[id]=(st&&st.hasScan!=null)?(st.hasScan!==false):true;
+    /* v2.5: โหลด bonusCount ต่อฐาน */
+    stationBonusCount[id]=(st&&st.bonusCount!=null)?(parseInt(st.bonusCount)||1):1;});
     renderStationActiveToggles();}});
   apiGet('getAppSettings',function(res){if(res&&!res.error){applyAppSettings(res);
     var tog=document.getElementById('cs-toggle');var pill=document.getElementById('cs-pill');var track=document.getElementById('cs-track');var knob=document.getElementById('cs-knob');var on=res.coming_soon;if(tog)tog.checked=on;if(pill){pill.textContent=on?'● กำลังแสดง Coming Soon':'● เปิดใช้งานปกติ';pill.style.background=on?'#fff7ed':'#f0fdf4';pill.style.color=on?'#c2410c':'#16a34a';pill.style.borderColor=on?'#fed7aa':'#bbf7d0';}if(track)track.style.background=on?'var(--navy)':'var(--border)';if(knob)knob.style.transform=on?'translateX(18px)':'translateX(0)';
@@ -1975,7 +2010,18 @@ function renderStationActiveToggles(){
     html+='<div style="display:flex;gap:16px;margin-top:9px;padding-top:9px;border-top:1px solid var(--bg2);">';
     html+='<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" '+(hq?'checked':'')+' onchange="toggleStationField(\''+k+'\',\'hasQuiz\',this.checked)" style="width:16px;height:16px;"><span style="font-size:11px;color:var(--muted);">มี Quiz</span></label>';
     html+='<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" '+(hs?'checked':'')+' onchange="toggleStationField(\''+k+'\',\'hasScan\',this.checked)" style="width:16px;height:16px;"><span style="font-size:11px;color:var(--muted);">มีสแกนโบนัส</span></label>';
+    html+='</div>';
+    /* v2.5: stepper จำนวน QR Bonus ย่อยของฐานนี้ (default 1) — ใช้กับเคสฐานที่ต้องการ
+       หลาย QR แยกกัน แต่ละอันสแกนได้ครั้งเดียว เช่น QA ต้องการ 2 QR */
+    var bc=stationBonusCount[k]||1;
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:1px solid var(--bg2);">';
+    html+='<span style="font-size:11px;color:var(--muted);">จำนวน QR Bonus</span>';
+    html+='<div style="display:flex;align-items:center;gap:8px;">';
+    html+='<button onclick="changeBonusCount(\''+k+'\',-1)" style="width:24px;height:24px;padding:0;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:14px;line-height:1;">−</button>';
+    html+='<span id="bc-count-'+k+'" style="font-size:13px;font-weight:700;min-width:14px;text-align:center;color:var(--navy);">'+bc+'</span>';
+    html+='<button onclick="changeBonusCount(\''+k+'\',1)" style="width:24px;height:24px;padding:0;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:14px;line-height:1;">+</button>';
     html+='</div></div>';
+    html+='</div>';
   });
   el.innerHTML=html;
 }
@@ -1985,7 +2031,8 @@ function saveStationSettings_(){
     bonus:parseInt((document.getElementById('bon-'+id)||{}).value)||0,
     active:stationActive[id]!==false,
     hasQuiz:stationHasQuiz[id]!==false,
-    hasScan:stationHasScan[id]!==false
+    hasScan:stationHasScan[id]!==false,
+    bonusCount:stationBonusCount[id]||1
   };});
   apiPost({action:'saveSettings',settings:s},function(){});
 }
@@ -2002,6 +2049,15 @@ function toggleStationActive(k,on){
 function toggleStationField(k,field,val){
   if(field==='hasQuiz')stationHasQuiz[k]=val;
   else if(field==='hasScan')stationHasScan[k]=val;
+  saveStationSettings_();
+}
+/* v2.5: changeBonusCount — ปรับจำนวน QR bonus ย่อยของฐาน (1-4) แล้วบันทึก + รีเซ็ต QR grid */
+function changeBonusCount(k,delta){
+  var cur=stationBonusCount[k]||1;
+  var next=Math.max(1,Math.min(4,cur+delta));
+  stationBonusCount[k]=next;
+  var el=document.getElementById('bc-count-'+k);if(el)el.textContent=next;
+  adminQrBuilt=false; /* บังคับให้ buildAdminQR วาด QR grid ใหม่ตามจำนวนล่าสุด */
   saveStationSettings_();
 }
 function loadStationStats(){
@@ -2030,24 +2086,36 @@ function loadStationStats(){
 buildAdminQR=function(){
   apiGet('getSettings',function(res){
     var s=res.settings||{};var ORDER=['PR','QA','QC'];var html='';
-    ORDER.forEach(function(k){var info=STATION_MAP[k];var bonus=(s[k]&&s[k].bonus!=null?s[k].bonus:0);html+='<button onclick="showAdminQR(\''+k+'\')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;font-family:inherit;transition:.15s;" onmouseover="this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><div style="font-size:26px;margin-bottom:6px;">'+info.icon+'</div><div style="font-size:13px;font-weight:700;color:var(--navy);">'+k+'</div><div style="font-size:10px;color:var(--muted);margin-top:1px;">'+info.name+'</div><div style="font-size:10px;font-weight:700;color:var(--accent);background:var(--blue-light);border:1px solid #bfdbfe;border-radius:20px;padding:2px 8px;display:inline-block;margin-top:6px;">+'+bonus+' bonus</div></button>';});
+    ORDER.forEach(function(k){
+      var info=STATION_MAP[k];var bonus=(s[k]&&s[k].bonus!=null?s[k].bonus:0);
+      var count=(s[k]&&s[k].bonusCount!=null?(parseInt(s[k].bonusCount)||1):1);
+      /* v2.5: ฐานที่มี QR bonus มากกว่า 1 อัน สร้างปุ่มแยกกันต่อ QR (เช่น QA #1, QA #2) */
+      for(var i=1;i<=count;i++){
+        var label=count>1?(k+' #'+i):k;
+        var sub=count>1?i:0;
+        html+='<button onclick="showAdminQR(\''+k+'\','+sub+')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;font-family:inherit;transition:.15s;" onmouseover="this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><div style="font-size:26px;margin-bottom:6px;">'+info.icon+'</div><div style="font-size:13px;font-weight:700;color:var(--navy);">'+label+'</div><div style="font-size:10px;color:var(--muted);margin-top:1px;">'+info.name+'</div><div style="font-size:10px;font-weight:700;color:var(--accent);background:var(--blue-light);border:1px solid #bfdbfe;border-radius:20px;padding:2px 8px;display:inline-block;margin-top:6px;">+'+bonus+' bonus</div></button>';
+      }
+    });
     document.getElementById('adminQrGrid').innerHTML=html;adminQrBuilt=true;
   });
 };
 var qrPopupInstance=null;
-function showAdminQR(k){
+function showAdminQR(k,sub){
   var info=STATION_MAP[k];
-  document.getElementById('qr-popup-icon').textContent=info.icon;document.getElementById('qr-popup-title').textContent='ฐาน '+k+' — '+info.name;
-  document.getElementById('qr-popup-sub').textContent='ให้ผู้เข้าร่วมสแกน QR นี้เพื่อรับ bonus';document.getElementById('qr-popup-label').textContent='ENS-BONUS-'+k;
+  var qrText=sub?('ENS-BONUS-'+k+'-'+sub):('ENS-BONUS-'+k);
+  var label=sub?(k+' #'+sub):k;
+  document.getElementById('qr-popup-icon').textContent=info.icon;document.getElementById('qr-popup-title').textContent='ฐาน '+label+' — '+info.name;
+  document.getElementById('qr-popup-sub').textContent='ให้ผู้เข้าร่วมสแกน QR นี้เพื่อรับ bonus';document.getElementById('qr-popup-label').textContent=qrText;
   var box=document.getElementById('qr-popup-box');box.innerHTML='';
-  qrPopupInstance=new QRCode(box,{text:'ENS-BONUS-'+k,width:180,height:180,colorDark:'#0f2248',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+  qrPopupInstance=new QRCode(box,{text:qrText,width:180,height:180,colorDark:'#0f2248',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
   document.getElementById('qr-popup-overlay').style.display='flex';
 }
 function closeQRPopup(){document.getElementById('qr-popup-overlay').style.display='none';document.getElementById('qr-popup-box').innerHTML='';qrPopupInstance=null;}
 function doSaveSettings(){
   /* FIX-3d: รวม field active (จาก stationActive) ไปด้วย กันค่า toggle หายตอนกดบันทึก
-     v2.4: รวม hasQuiz/hasScan ด้วยเช่นกัน */
-  var s={};['PR','QA','QC'].forEach(function(id){s[id]={points:parseInt(document.getElementById('pts-'+id).value)||1,bonus:parseInt(document.getElementById('bon-'+id).value)||0,active:stationActive[id]!==false,hasQuiz:stationHasQuiz[id]!==false,hasScan:stationHasScan[id]!==false};});
+     v2.4: รวม hasQuiz/hasScan ด้วยเช่นกัน
+     v2.5: รวม bonusCount ด้วย */
+  var s={};['PR','QA','QC'].forEach(function(id){s[id]={points:parseInt(document.getElementById('pts-'+id).value)||1,bonus:parseInt(document.getElementById('bon-'+id).value)||0,active:stationActive[id]!==false,hasQuiz:stationHasQuiz[id]!==false,hasScan:stationHasScan[id]!==false,bonusCount:stationBonusCount[id]||1};});
   showLoad();
   apiPost({action:'saveSettings',settings:s},function(res){hideLoad();if(res.success){settingsCache=s;adminQrBuilt=false;var ok=document.getElementById('admin-ok');ok.textContent='✅ บันทึกแล้ว';ok.style.display='block';setTimeout(function(){ok.style.display='none';},2000);}});
 }
@@ -2309,12 +2377,14 @@ function enterScanBonus(){
       document.getElementById('sb-name').textContent=m.full_name;
       document.getElementById('sb-uid').textContent='UID: '+m.uid+(m.department?' · '+m.department:'');
       document.getElementById('sb-total').textContent=m.total_score||0;
-      /* [v1.8.12] เช็คว่ารับโบนัสฐานนี้ไปแล้วหรือยัง — ถ้าใช่ ซ่อนกล้อง ไม่ต้องเปิดสแกนเนอร์ */
-      var bonusKey=scanBonusStation?(scanBonusStation+'_bonus'):null;
-      if(bonusKey&&m.scores&&m.scores[bonusKey]!==undefined){
-        bonusDoneMap[scanBonusStation]=true;
+      /* v2.5: sync bonusScores จากข้อมูลสดล่าสุด แล้วเช็คว่ารับครบทุก QR ของฐานนี้แล้วหรือยัง
+         รองรับฐานที่มี QR เดียว (เดิม) และหลายอัน (ใหม่) ผ่าน getStationBonusProgress() */
+      if(m.scores)Object.keys(m.scores).forEach(function(k){if(k.indexOf('_bonus')>-1)bonusScores[k]=m.scores[k];});
+      if(scanBonusStation&&isBonusFullyDone(scanBonusStation)){
         if(scanCard)scanCard.style.display='none';
-        showBonusScanResult(true,'ได้รับโบนัสฐาน '+scanBonusStation+' ไปแล้ว','+'+m.scores[bonusKey]+' คะแนน · ไม่สามารถรับซ้ำได้');
+        var doneBonusKey=(stationBonusCount[scanBonusStation]>1)?null:(scanBonusStation+'_bonus');
+        var doneAmt=doneBonusKey?(m.scores[doneBonusKey]||0):null;
+        showBonusScanResult(true,'ได้รับโบนัสฐาน '+scanBonusStation+' ครบแล้ว',doneAmt!=null?('+'+doneAmt+' คะแนน · ไม่สามารถรับซ้ำได้'):'สแกนครบทุก QR ของฐานนี้แล้ว');
         return;
       }
     }
@@ -2329,9 +2399,11 @@ function startBonusScanner(){
     .catch(function(){document.getElementById('scan-hint').innerHTML='<span style="color:var(--red)">เปิดกล้องไม่ได้ — กรุณาอนุญาตการใช้กล้อง</span>';bonusScanner=null;});
 }
 function stopBonusScanner(){if(bonusScanner){try{bonusScanner.stop().catch(function(){});}catch(e){}bonusScanner=null;}}
+/* v2.5: รองรับ QR รูปแบบ "ENS-BONUS-{station}" (เดิม, ฐานที่มี QR เดียว)
+   และ "ENS-BONUS-{station}-{n}" (ใหม่, ฐานที่มีหลาย QR แยกกัน) */
 function onBonusScan(text){
   var now=Date.now();if(bonusBusy||(now-lastBonusScanAt)<2500)return;
-  var m=String(text).trim().toUpperCase().match(/^ENS-BONUS-(PR|QA|QC)$/);
+  var m=String(text).trim().toUpperCase().match(/^ENS-BONUS-(PR|QA|QC)(?:-([1-9]\d*))?$/);
   if(!m){showBonusScanResult(false,'QR ไม่ถูกต้อง','ไม่ใช่ QR โบนัสประจำฐาน');lastBonusScanAt=now;return;}
   /* [FIX-9] ตรวจว่า QR ที่สแกนตรงกับฐานที่ user เปิดอยู่ — ป้องกันสแกนข้ามฐาน */
   if(scanBonusStation&&m[1]!==scanBonusStation){
@@ -2339,9 +2411,17 @@ function onBonusScan(text){
     lastBonusScanAt=now;return;
   }
   lastBonusScanAt=now;bonusBusy=true;document.getElementById('scan-hint').textContent='กำลังบันทึกคะแนน…';
-  apiPost({action:'bonusScan',uid:currentUid,station:m[1]},function(res){
+  apiPost({action:'bonusScan',uid:currentUid,station:m[1],sub:m[2]||undefined},function(res){
     bonusBusy=false;document.getElementById('scan-hint').textContent='เล็งกล้องไปที่ QR ของฐาน';
-    if(res&&res.success){bonusDoneMap[res.station]=true;document.getElementById('sb-total').textContent=res.total_score;showBonusScanResult(true,'รับโบนัสฐาน '+res.station+' สำเร็จ!','+'+res.bonus+' คะแนน · รวม '+res.total_score+' คะแนน');if(navigator.vibrate)navigator.vibrate([60,40,60]);}
+    if(res&&res.success){
+      if(res.bonusKey)bonusScores[res.bonusKey]=res.bonus;
+      document.getElementById('sb-total').textContent=res.total_score;
+      var full=isBonusFullyDone(res.station);
+      var label=res.sub?(res.station+' #'+res.sub):res.station;
+      showBonusScanResult(true,'รับโบนัส '+label+' สำเร็จ!','+'+res.bonus+' คะแนน · รวม '+res.total_score+' คะแนน'+(full?'':' · ยังเหลือ QR อีก '+(getStationBonusProgress(res.station).total-getStationBonusProgress(res.station).done)+' อัน'));
+      if(navigator.vibrate)navigator.vibrate([60,40,60]);
+      if(full){var scanCard=document.getElementById('sb-scan-card');if(scanCard)scanCard.style.display='none';stopBonusScanner();}
+    }
     else{showBonusScanResult(false,'รับโบนัสไม่ได้',(res&&res.error)||'เกิดข้อผิดพลาด');}
   });
 }
@@ -2388,7 +2468,19 @@ window.addEventListener('load',function(){
    แทนคำถามตายตัวในโค้ด (เดิม SV_Q 10 ข้อ ถูกลบออกทั้งหมด)
 ═══════════════════════════════════════════ */
 var svCur=0,svSel=-1,svAns=[];
+var svChoiceIdx=[]; // v2.5: index ตัวเลือกที่กดของคำถามแบบเลือกตอบ (แยกจาก svAns เดิม)
+var svTextVals=[]; // v2.5: array ของ array ข้อความที่พิมพ์ ต่อคำถามแบบพิมพ์ตอบ (__TEXT__:)
 var svQuestions=[]; // โหลดจาก API getSurveyQuestions ตอนเปิดหน้า
+
+/* v2.5: คำถามแบบพิมพ์ตอบ — กำหนดในชีต survey โดยใส่ค่าพิเศษใน choice_a
+   รูปแบบ "__TEXT__:ป้ายกำกับ1,ป้ายกำกับ2" (คั่นด้วย comma ได้หลายกล่อง)
+   เว้นว่างตอบได้ ไม่บังคับกรอก */
+function isTextQuestion(q){
+  return q.c&&q.c.length===1&&typeof q.c[0]==='string'&&q.c[0].indexOf('__TEXT__:')===0;
+}
+function getTextLabels(q){
+  return q.c[0].slice('__TEXT__:'.length).split(',').map(function(s){return s.trim();}).filter(Boolean);
+}
 
 function renderSurveyCard(){
   var card=document.getElementById('home-survey-card');
@@ -2429,7 +2521,7 @@ function openSurvey(){
     hideLoad();
     svQuestions=(res&&res.length)?res:[];
     if(!svQuestions.length){showStationToast('ไม่พบคำถามแบบประเมินในฐานข้อมูล');return;}
-    svCur=0;svSel=-1;svAns=[];
+    svCur=0;svSel=-1;svAns=[];svChoiceIdx=[];svTextVals=[];
     go('survey');
     document.getElementById('sv-q-view').style.display='block';
     document.getElementById('sv-done-view').style.display='none';
@@ -2444,27 +2536,53 @@ function svRender(){
   document.getElementById('sv-counter').textContent=(svCur+1)+' / '+svQuestions.length;
   document.getElementById('sv-psub').textContent='Walk Together : 7 Billion · '+svQuestions.length+' ข้อ';
   document.getElementById('sv-bar').style.width=Math.round((svCur+1)/svQuestions.length*100)+'%';
-  svSel=svAns[svCur]!==undefined?svAns[svCur]:-1;
-  var L=['A','B','C','D'];
-  document.getElementById('sv-choices').innerHTML=q.c.map(function(c,i){
-    var s=svSel===i;
-    return'<button onclick="svPick('+i+')" style="background:'+(s?'var(--blue-light)':'var(--bg)')+';border:1.5px solid '+(s?'var(--accent)':'var(--border)')+';border-radius:11px;padding:10px 13px;font-size:13px;color:'+(s?'var(--accent)':'var(--navy)')+';cursor:pointer;text-align:left;font-family:inherit;display:flex;align-items:center;gap:9px;transition:.15s;width:100%;">'
-      +'<div style="width:22px;height:22px;border-radius:50%;background:'+(s?'var(--accent)':'var(--bg2)')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:'+(s?'#fff':'var(--navy)')+';">'+L[i]+'</div>'
-      +'<span>'+c+'</span></button>';
-  }).join('');
   var btn=document.getElementById('sv-next-btn');
-  if(svSel>=0){btn.style.opacity='1';btn.style.pointerEvents='auto';}
-  else{btn.style.opacity='.35';btn.style.pointerEvents='none';}
+
+  if(isTextQuestion(q)){
+    /* v2.5: คำถามแบบพิมพ์ตอบ — วาดกล่องข้อความตามจำนวนป้ายกำกับที่กำหนดในชีต
+       ไม่บังคับกรอก ปุ่มถัดไปเปิดใช้งานเสมอ */
+    var labels=getTextLabels(q);
+    if(!svTextVals[svCur])svTextVals[svCur]=labels.map(function(){return '';});
+    document.getElementById('sv-choices').innerHTML=labels.map(function(lb,li){
+      var val=(svTextVals[svCur][li]||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return'<label style="font-size:12px;color:var(--sub);display:block;margin-bottom:6px;">'+lb+'</label>'
+        +'<textarea id="sv-text-'+li+'" placeholder="พิมพ์ความเห็นของคุณ (เว้นว่างได้)" style="width:100%;min-height:70px;margin-bottom:14px;padding:10px;border-radius:11px;border:1.5px solid var(--border);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;">'+val+'</textarea>';
+    }).join('');
+    labels.forEach(function(lb,li){
+      document.getElementById('sv-text-'+li).addEventListener('input',function(){svTextVals[svCur][li]=this.value;});
+    });
+    btn.style.opacity='1';btn.style.pointerEvents='auto';
+  } else {
+    svSel=svChoiceIdx[svCur]!==undefined?svChoiceIdx[svCur]:-1;
+    var L=['A','B','C','D'];
+    document.getElementById('sv-choices').innerHTML=q.c.map(function(c,i){
+      var s=svSel===i;
+      return'<button onclick="svPick('+i+')" style="background:'+(s?'var(--blue-light)':'var(--bg)')+';border:1.5px solid '+(s?'var(--accent)':'var(--border)')+';border-radius:11px;padding:10px 13px;font-size:13px;color:'+(s?'var(--accent)':'var(--navy)')+';cursor:pointer;text-align:left;font-family:inherit;display:flex;align-items:center;gap:9px;transition:.15s;width:100%;">'
+        +'<div style="width:22px;height:22px;border-radius:50%;background:'+(s?'var(--accent)':'var(--bg2)')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:'+(s?'#fff':'var(--navy)')+';">'+L[i]+'</div>'
+        +'<span>'+c+'</span></button>';
+    }).join('');
+    if(svSel>=0){btn.style.opacity='1';btn.style.pointerEvents='auto';}
+    else{btn.style.opacity='.35';btn.style.pointerEvents='none';}
+  }
   btn.textContent=svCur<svQuestions.length-1?'ถัดไป →':'ส่งแบบประเมิน ✓';
 }
 
-function svPick(i){svSel=i;svAns[svCur]=i;svRender();}
+function svPick(i){svChoiceIdx[svCur]=i;svRender();}
 
 function svNext(){
-  if(svSel<0)return;
+  var curQ=svQuestions[svCur];
+  if(!isTextQuestion(curQ)&&svChoiceIdx[svCur]===undefined)return;
   if(svCur<svQuestions.length-1){svCur++;svRender();return;}
   showLoad();
-  var answers=svQuestions.map(function(q,i){return q.c[svAns[i]!==undefined?svAns[i]:0];});
+  var answers=svQuestions.map(function(qq,i){
+    if(isTextQuestion(qq)){
+      var labels=getTextLabels(qq);
+      var vals=svTextVals[i]||labels.map(function(){return '';});
+      /* รวมทุกกล่องของคำถามนี้เป็นข้อความเดียว เก็บลง column เดียวกันใน survey_results */
+      return labels.map(function(lb,li){return lb+': '+((vals[li]||'').trim()||'(ไม่ได้ตอบ)');}).join(' || ');
+    }
+    return qq.c[svChoiceIdx[i]!==undefined?svChoiceIdx[i]:0];
+  });
   apiPost({action:'saveSurvey',uid:currentUid,answers:answers},function(res){
     hideLoad();
     if(res.error){showStationToast(res.error);return;}
