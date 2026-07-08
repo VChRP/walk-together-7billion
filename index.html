@@ -6,8 +6,25 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 2.8                                          ║
+  ║  Version : 3.0                                          ║
   ║  Date    : 2026-07-08                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v3.0 — ปลดล็อกแบบประเมิน + ปรับ UX ตามฟีดแบ็ก 3 จุด      ║
+  ║  1) แบบประเมินไม่ต้องรอทำ Quiz ครบ 3 ฐานก่อนอีกต่อไป      ║
+  ║     กดทำได้ตลอดเวลา                                       ║
+  ║  2) แยก "คะแนนที่ได้เพิ่ม" กับ "คะแนนสะสมรวม" เป็นคนละ    ║
+  ║     บรรทัดชัดเจนในหน้าผลสแกนโบนัส (เดิมเขียนติดกันบรรทัด  ║
+  ║     เดียว "+3 คะแนน · รวม 12 คะแนน" ทำให้เข้าใจผิดได้)    ║
+  ║  3) เน้นชื่อฐานในข้อความเตือน "QR ไม่ตรงกับฐานนี้" ให้     ║
+  ║     ตัวหนา/ใหญ่ขึ้น เห็นชัดว่าอยู่ฐานไหน สแกนฐานไหนผิด    ║
+  ║  4) ปุ่ม Back (.back-ico + ปุ่มกลับหน้ารายละเอียดฐาน)      ║
+  ║     ใหญ่ขึ้น คมชัดขึ้น หน้ารายละเอียดฐานเพิ่มคำว่า "กลับ" ║
+  ║     กำกับ ไม่ใช่ไอคอนเปล่าๆ + ปุ่ม Logout ใหญ่/เด่นขึ้น   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.9 — Admin: เปลี่ยน "รีเซ็ต Quiz รายคน" จากกรอก UID    ║
+  ║  เป็นพิมพ์ชื่อ + autocomplete เลือกจากรายชื่อที่ลงทะเบียน  ║
+  ║  แล้ว (ค้นจาก adminMembersData ที่โหลดไว้แล้ว ไม่ต้องยิง  ║
+  ║  API เพิ่ม) ลดโอกาสพิมพ์ UID ผิด/หาไม่เจอ                 ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v2.8 — แก้บั๊ก QR Bonus grid ไม่รีเฟรชทันทีตอนปรับ        ║
   ║  "จำนวน QR Bonus" — เดิมบันทึกลง Sheet ถูกต้อง แต่การ์ด   ║
@@ -126,7 +143,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v2.8</title>
+<title>Walk Together : 7 Billion · v3.0</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -173,7 +190,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 .btn-outline{background:transparent;border:1.5px solid var(--border2);color:var(--sub);font-size:14px;}
 .btn-outline:active{border-color:var(--navy);color:var(--navy);}
 .btn-ghost-sm{background:none;border:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;}
-.btn-danger-sm{padding:9px 20px;background:var(--bg);border:1.5px solid #fecaca;border-radius:10px;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-danger-sm{padding:12px 26px;background:var(--bg);border:2px solid #fca5a5;border-radius:12px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
 
 /* ── Input ── */
 .lbl{font-size:12px;font-weight:600;color:var(--sub);margin-bottom:6px;display:block;letter-spacing:.2px;}
@@ -203,7 +220,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 /* ── Page header ── */
 .pg-header{padding:24px 0 20px;display:flex;align-items:center;gap:12px;}
-.back-ico{width:36px;height:36px;border-radius:12px;background:var(--bg2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--navy);cursor:pointer;flex-shrink:0;}
+.back-ico{width:42px;height:42px;border-radius:12px;background:var(--bg2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:var(--navy);cursor:pointer;flex-shrink:0;}
 .pg-titles .ptitle{font-size:17px;font-weight:700;color:var(--navy);letter-spacing:-.3px;}
 .pg-titles .psub{font-size:12px;color:var(--muted);margin-top:1px;}
 
@@ -565,7 +582,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <!-- Station detail overlay -->
   <div id="st-detail-overlay" style="display:none;position:absolute;inset:0;background:#fff;z-index:200;overflow-y:auto;">
     <div style="padding:16px 20px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#fff;z-index:1;">
-      <button onclick="closeStationDetail()" style="width:32px;height:32px;border-radius:9px;background:var(--bg2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0;">←</button>
+      <button onclick="closeStationDetail()" style="display:flex;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:11px;background:var(--bg2);border:2px solid var(--border2);font-size:14px;font-weight:700;color:var(--navy);cursor:pointer;flex-shrink:0;font-family:inherit;"><span style="font-size:17px;line-height:1;">←</span>กลับ</button>
       <div style="flex:1;">
         <div id="std-title" style="font-size:15px;font-weight:700;color:var(--navy);">—</div>
         <div id="std-sub" style="font-size:10px;color:var(--muted);">—</div>
@@ -618,7 +635,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.8</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v3.0</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -699,8 +716,11 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
     <!-- v2.0: รีเซ็ต Quiz รายคน กรณีเน็ตหลุด/รีเฟรชกลางคันจริง (ไม่ได้ตั้งใจโกง) -->
     <div class="sec-lbl">รีเซ็ต Quiz รายคน (กรณีติดค้าง)</div>
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">ใช้เมื่อผู้เข้าร่วม refresh/หลุดกลางคันแล้วเข้าฐานนั้นไม่ได้อีก — กรอก UID แล้วเลือกฐานที่ต้องการปลดล็อก จะล้างทั้งคะแนนและสถานะเริ่มทำของฐานนั้น</div>
-      <div class="field-single"><input id="reset-quiz-uid" placeholder="กรอก UID ผู้เข้าร่วม" style="text-transform:uppercase;"></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">ใช้เมื่อผู้เข้าร่วม refresh/หลุดกลางคันแล้วเข้าฐานนั้นไม่ได้อีก — พิมพ์ชื่อแล้วเลือกจากรายการที่ขึ้นให้ จากนั้นเลือกฐานที่ต้องการปลดล็อก จะล้างทั้งคะแนนและสถานะเริ่มทำของฐานนั้น</div>
+      <div class="field-single" style="position:relative;">
+        <input id="reset-quiz-name" placeholder="พิมพ์ชื่อผู้เข้าร่วม" oninput="searchResetQuizMember()" autocomplete="off">
+        <div id="reset-quiz-suggest" style="display:none;position:absolute;left:0;right:0;top:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:20;box-shadow:0 4px 14px rgba(0,0,0,.08);"></div>
+      </div>
       <select id="reset-quiz-station" style="width:100%;padding:11px;border-radius:14px;border:1.5px solid var(--border2);font-family:inherit;font-size:14px;margin-bottom:10px;background:var(--bg);color:var(--text);">
         <option value="PR">PR — Production</option>
         <option value="QA">QA — Quality Assurance</option>
@@ -898,7 +918,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v2.8
+   Walk Together : 7 Billion · v3.0
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -922,8 +942,12 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
    v2.7: แก้บั๊ก stuck state ล็อกฐานที่ Quiz จบแล้วแต่ยังไม่ได้สแกนโบนัส
    v2.8: แก้บั๊ก QR Bonus grid ไม่รีเฟรชทันทีตอนปรับจำนวน QR
          + กรองปุ่ม QR ตาม hasScan
+   v2.9: รีเซ็ต Quiz รายคน — เปลี่ยนจากกรอก UID เป็นพิมพ์ชื่อ+autocomplete
+   v3.0: ปลดล็อกแบบประเมิน (ทำได้ตลอดเวลา) + แยกคะแนน "ได้เพิ่ม"/
+         "สะสมรวม" ให้ชัดเจน + เน้นข้อความเตือน QR ผิดฐาน + ปุ่ม
+         Back/Logout เด่นขึ้น
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='2.8';
+var APP_VERSION='3.0';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -2178,20 +2202,42 @@ function doSaveSettings(){
   showLoad();
   apiPost({action:'saveSettings',settings:s},function(res){hideLoad();if(res.success){settingsCache=s;adminQrBuilt=false;var ok=document.getElementById('admin-ok');ok.textContent='✅ บันทึกแล้ว';ok.style.display='block';setTimeout(function(){ok.style.display='none';},2000);}});
 }
+/* v2.9: reset-quiz ใช้ "พิมพ์ชื่อแล้วเลือกจากรายการ" แทนกรอก UID ตรงๆ
+   ลดโอกาสพิมพ์ผิด/หา UID ไม่เจอ — ค้นจาก adminMembersData ที่โหลดไว้แล้วในหน้า Admin
+   ไม่ต้องยิง API เพิ่ม เลือกจากรายการแล้วค่อยแปลงเป็น uid ตอนส่งจริง (backend ไม่ต้องแก้) */
+var resetQuizSelectedUid=null;
+function searchResetQuizMember(){
+  var q=document.getElementById('reset-quiz-name').value.trim().toLowerCase();
+  resetQuizSelectedUid=null;
+  var box=document.getElementById('reset-quiz-suggest');
+  if(!q){box.style.display='none';box.innerHTML='';return;}
+  var matches=(adminMembersData||[]).filter(function(m){return m.full_name&&m.full_name.toLowerCase().indexOf(q)>-1;}).slice(0,6);
+  if(!matches.length){box.style.display='block';box.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--muted);">ไม่พบชื่อนี้ในรายชื่อที่ลงทะเบียน</div>';return;}
+  box.innerHTML=matches.map(function(m){return '<div onclick="pickResetQuizMember(\''+m.uid+'\')" style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bg2);" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'"><div style="font-size:13px;font-weight:600;color:var(--navy);">'+m.full_name+'</div><div style="font-size:11px;color:var(--muted);">'+(m.department||'')+' · UID: '+m.uid+'</div></div>';}).join('');
+  box.style.display='block';
+}
+function pickResetQuizMember(uid){
+  var m=(adminMembersData||[]).find(function(x){return x.uid===uid;});
+  if(!m)return;
+  resetQuizSelectedUid=uid;
+  document.getElementById('reset-quiz-name').value=m.full_name;
+  var box=document.getElementById('reset-quiz-suggest');box.style.display='none';box.innerHTML='';
+}
 /* v2.0: doResetQuizAttempt — Admin ปลดล็อกฐานที่ผู้เข้าร่วมทำติดค้าง
    (เช่น เน็ตหลุด/รีเฟรชกลางคันจริง ไม่ได้ตั้งใจโกง) */
 function doResetQuizAttempt(){
-  var uid=document.getElementById('reset-quiz-uid').value.trim().toUpperCase();
+  var uid=resetQuizSelectedUid;
   var station=document.getElementById('reset-quiz-station').value;
   var msg=document.getElementById('reset-quiz-msg');
   msg.textContent='';
-  if(!uid){msg.style.color='var(--red)';msg.textContent='กรุณากรอก UID';return;}
+  if(!uid){msg.style.color='var(--red)';msg.textContent='กรุณาพิมพ์ชื่อแล้วเลือกจากรายการที่ขึ้นให้ก่อน';return;}
   showLoad();
   apiPost({action:'resetQuizAttempt',uid:uid,station:station},function(res){
     hideLoad();
     if(res.error){msg.style.color='var(--red)';msg.textContent=res.error;return;}
     msg.style.color='var(--green)';msg.textContent='✅ ปลดล็อกฐาน '+station+' ให้ '+(res.full_name||uid)+' แล้ว (คะแนนรวมล่าสุด: '+res.total_score+')';
-    document.getElementById('reset-quiz-uid').value='';
+    document.getElementById('reset-quiz-name').value='';
+    resetQuizSelectedUid=null;
   });
 }
 function doLogout(){
@@ -2443,7 +2489,11 @@ function enterScanBonus(){
         if(scanCard)scanCard.style.display='none';
         var doneBonusKey=(stationBonusCount[scanBonusStation]>1)?null:(scanBonusStation+'_bonus');
         var doneAmt=doneBonusKey?(m.scores[doneBonusKey]||0):null;
-        showBonusScanResult(true,'ได้รับโบนัสฐาน '+scanBonusStation+' ครบแล้ว',doneAmt!=null?('+'+doneAmt+' คะแนน · ไม่สามารถรับซ้ำได้'):'สแกนครบทุก QR ของฐานนี้แล้ว');
+        if(doneAmt!=null){
+          showBonusScanResult(true,'ได้รับโบนัสฐาน '+scanBonusStation+' ครบแล้ว','ไม่สามารถรับซ้ำได้',doneAmt,m.total_score);
+        } else {
+          showBonusScanResult(true,'ได้รับโบนัสฐาน '+scanBonusStation+' ครบแล้ว','สแกนครบทุก QR ของฐานนี้แล้ว');
+        }
         return;
       }
     }
@@ -2466,7 +2516,7 @@ function onBonusScan(text){
   if(!m){showBonusScanResult(false,'QR ไม่ถูกต้อง','ไม่ใช่ QR โบนัสประจำฐาน');lastBonusScanAt=now;return;}
   /* [FIX-9] ตรวจว่า QR ที่สแกนตรงกับฐานที่ user เปิดอยู่ — ป้องกันสแกนข้ามฐาน */
   if(scanBonusStation&&m[1]!==scanBonusStation){
-    showBonusScanResult(false,'QR ไม่ตรงกับฐานนี้','คุณอยู่ฐาน '+scanBonusStation+' แต่สแกน QR ฐาน '+m[1]);
+    showBonusScanResult(false,'QR ไม่ตรงกับฐานนี้','คุณอยู่ฐาน <strong style="color:var(--navy);font-size:15px;">'+scanBonusStation+'</strong> แต่สแกน QR ฐาน <strong style="color:var(--red);font-size:15px;">'+m[1]+'</strong>');
     lastBonusScanAt=now;return;
   }
   lastBonusScanAt=now;bonusBusy=true;document.getElementById('scan-hint').textContent='กำลังบันทึกคะแนน…';
@@ -2477,14 +2527,28 @@ function onBonusScan(text){
       document.getElementById('sb-total').textContent=res.total_score;
       var full=isBonusFullyDone(res.station);
       var label=res.sub?(res.station+' #'+res.sub):res.station;
-      showBonusScanResult(true,'รับโบนัส '+label+' สำเร็จ!','+'+res.bonus+' คะแนน · รวม '+res.total_score+' คะแนน'+(full?'':' · ยังเหลือ QR อีก '+(getStationBonusProgress(res.station).total-getStationBonusProgress(res.station).done)+' อัน'));
+      var remainNote=full?null:('ยังเหลือ QR อีก '+(getStationBonusProgress(res.station).total-getStationBonusProgress(res.station).done)+' อัน');
+      showBonusScanResult(true,'รับโบนัส '+label+' สำเร็จ!',null,res.bonus,res.total_score,remainNote);
       if(navigator.vibrate)navigator.vibrate([60,40,60]);
       if(full){var scanCard=document.getElementById('sb-scan-card');if(scanCard)scanCard.style.display='none';stopBonusScanner();}
     }
     else{showBonusScanResult(false,'รับโบนัสไม่ได้',(res&&res.error)||'เกิดข้อผิดพลาด');}
   });
 }
-function showBonusScanResult(ok,title,desc){document.getElementById('sb-result').innerHTML='<div class="scan-result '+(ok?'ok':'bad')+'"><div class="sic">'+(ok?'✅':'⚠️')+'</div><div class="stitle">'+title+'</div><div class="sdesc">'+desc+'</div></div>';}
+/* v3.1: showBonusScanResult — แยก "คะแนนที่ได้เพิ่มจากการสแกนนี้" ออกจาก
+   "คะแนนสะสมรวมทั้งหมด" ให้เห็นชัดคนละบรรทัด (เดิมเขียนติดกันบรรทัดเดียว
+   "+3 คะแนน · รวม 12 คะแนน" ทำให้เข้าใจผิดว่าสแกนได้ 12 คะแนน) */
+function showBonusScanResult(ok,title,desc,earned,totalScore,extraNote){
+  var body;
+  if(ok&&earned!=null){
+    body='<div style="font-size:26px;font-weight:800;color:var(--green);margin-top:8px;">+'+earned+' คะแนน</div>'
+      +'<div class="sdesc" style="margin-top:4px;">สะสมรวม '+totalScore+' คะแนน</div>'
+      +(extraNote?'<div class="sdesc" style="margin-top:2px;">'+extraNote+'</div>':'');
+  } else {
+    body='<div class="sdesc">'+desc+'</div>';
+  }
+  document.getElementById('sb-result').innerHTML='<div class="scan-result '+(ok?'ok':'bad')+'"><div class="sic">'+(ok?'✅':'⚠️')+'</div><div class="stitle">'+title+'</div>'+body+'</div>';
+}
 
 /* ── Splash + Init ── */
 pushGuardState(); /* [v1.8.8] สร้างเบาะกันชน history ตั้งแต่แอปเริ่มโหลด */
@@ -2547,33 +2611,23 @@ function renderSurveyCard(){
   var title=document.getElementById('survey-card-title');
   var sub=document.getElementById('survey-card-sub');
   if(!card)return;
-  /* [FIX-12] unlock เมื่อครบ 3 ฐาน (PR+QA+QC) เสมอ ไม่ว่าจะ free หรือ sequential
-     v2.4: ใช้ isStationFullyDone() แทน qzDoneMap ตรงๆ — รองรับฐานที่ไม่มี Quiz
-     (นับว่า "เสร็จ" จากการสแกนโบนัสอย่างเดียวได้ ถ้าฐานนั้นปิด Quiz ไว้) */
-  var allDone=['PR','QA','QC'].every(function(id){return isStationFullyDone(id);});
+  /* v3.0: แบบประเมินไม่ต้องล็อกรอทำฐานให้ครบอีกต่อไป — ทำได้ทันทีทุกเมื่อ
+     (เดิมล็อกจนกว่าจะครบ 3 ฐาน ตามคำขอให้ปลดล็อก) */
   if(surveyDone){
     card.style.cssText='border-radius:18px;padding:16px 14px;display:flex;align-items:center;gap:12px;transition:.18s;background:#f0fdf4;border:1.5px solid #86efac;cursor:default;opacity:1;';
     title.style.color='#16a34a';title.textContent='แบบประเมิน — ส่งแล้ว ✓';
     sub.style.color='#16a34a';sub.textContent='ขอบคุณสำหรับความคิดเห็น';
     badge.textContent='✓ เสร็จแล้ว';badge.style.cssText='font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;border:1px solid #86efac;';
-  } else if(allDone){
+  } else {
     card.style.cssText='border-radius:18px;padding:16px 14px;display:flex;align-items:center;gap:12px;transition:.18s;background:var(--bg);border:1.5px solid var(--navy);cursor:pointer;opacity:1;box-shadow:0 4px 14px rgba(15,34,72,.12);';
     title.style.color='var(--navy)';title.textContent='แบบประเมินความพึงพอใจ';
     sub.style.color='var(--muted)';sub.textContent='ใช้เวลาไม่นาน';
     badge.textContent='ทำได้เลย →';badge.style.cssText='font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--navy);color:#fff;border:1px solid var(--navy);';
-  } else {
-    card.style.cssText='border-radius:18px;padding:16px 14px;display:flex;align-items:center;gap:12px;transition:.18s;background:var(--bg2);border:1.5px solid var(--border);opacity:.55;cursor:not-allowed;';
-    title.style.color='var(--muted)';title.textContent='แบบประเมินความพึงพอใจ';
-    sub.style.color='var(--muted)';sub.textContent='ทำ Quiz ให้ครบทั้ง 3 ฐานก่อน';
-    badge.textContent='🔒 ล็อก';badge.style.cssText='font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--muted);border:1px solid var(--border);';
   }
 }
 
 function openSurvey(){
-  /* [FIX-12] ต้องครบ 3 ฐาน (PR+QA+QC) เสมอ ไม่ว่าจะ free หรือ sequential mode
-     v2.4: ใช้ isStationFullyDone() แทน qzDoneMap ตรงๆ */
-  var allDone=['PR','QA','QC'].every(function(id){return isStationFullyDone(id);});
-  if(!allDone){showStationToast('ทำ Quiz ให้ครบทั้ง 3 ฐานก่อน');return;}
+  /* v3.0: ปลดล็อกแบบประเมิน — ไม่ต้องรอทำฐานครบอีกต่อไป กดทำได้ตลอดเวลา */
   if(surveyDone){showStationToast('ทำแบบประเมินแล้ว ขอบคุณ');return;}
   showLoad();
   apiGet('getSurveyQuestions',function(res){
