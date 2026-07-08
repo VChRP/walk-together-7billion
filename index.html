@@ -6,8 +6,29 @@
 <!--
   ╔══════════════════════════════════════════════════════════╗
   ║  Walk Together : 7 Billion                              ║
-  ║  Version : 2.5                                          ║
-  ║  Date    : 2026-07-06                                   ║
+  ║  Version : 2.8                                          ║
+  ║  Date    : 2026-07-08                                   ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.8 — แก้บั๊ก QR Bonus grid ไม่รีเฟรชทันทีตอนปรับ        ║
+  ║  "จำนวน QR Bonus" — เดิมบันทึกลง Sheet ถูกต้อง แต่การ์ด   ║
+  ║  QR ในหน้าเดิมไม่วาดใหม่จนกว่าจะสลับแท็บออก-เข้า          ║
+  ║  แก้ให้วาดใหม่ทันทีหลังบันทึกเสร็จ + ซ่อนปุ่ม QR ของฐาน   ║
+  ║  ที่ปิด "มีสแกนโบนัส" ไว้ด้วย (เดิมไม่กรอง)               ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.7 — แก้บั๊ก "ทำ Quiz จบแล้วแต่เข้าฐานไม่ได้"           ║
+  ║  getStationState() เดิมเช็คแค่ "เคยเริ่ม Quiz ไหม" ไม่เช็ค║
+  ║  ว่า Quiz จบหรือยัง ทำให้ฐานที่มีทั้ง Quiz+สแกนโบนัส พอ   ║
+  ║  ทำ Quiz จบแล้วแต่ยังไม่ได้สแกน ถูกล็อกเป็น "ติดต่อ        ║
+  ║  เจ้าหน้าที่" (stuck) ทั้งที่ Quiz เสร็จสมบูรณ์แล้ว        ║
+  ║  แก้ให้เช็คเพิ่มว่า Quiz ยังไม่เสร็จด้วยถึงจะล็อก         ║
+  ╠══════════════════════════════════════════════════════════╣
+  ║  v2.6 — Admin: ตัดส่วน "คะแนนสูงสุด 3 อันดับ" ออกจาก      ║
+  ║  สถิติประจำฐาน (ซ้ำกับ Leaderboard ในแท็บภาพรวม + ตัวเลข ║
+  ║  ที่โชว์เป็นคะแนนรวมทั้งหมด ไม่ใช่คะแนนเฉพาะฐานนั้น       ║
+  ║  ทำให้เข้าใจผิดได้) + แก้บั๊กนับ "คนผ่าน" ให้เช็คจาก       ║
+  ║  isStationFullyDone-เทียบเท่า แทนเช็คคะแนน Quiz อย่างเดียว║
+  ║  (เดิมฐานที่ปิด Quiz ไว้ใช้สแกนอย่างเดียว จะนับได้ 0 คน   ║
+  ║  ตลอด ทั้งที่มีคนสแกนรับโบนัสผ่านไปแล้ว)                 ║
   ╠══════════════════════════════════════════════════════════╣
   ║  v2.5 — QR Bonus หลายตัวต่อฐาน + คำถาม Survey พิมพ์ตอบ    ║
   ║  1) ฐานที่ต้องการ QR bonus มากกว่า 1 อัน (เช่น QA=2 QR)   ║
@@ -105,7 +126,7 @@
   ║  - ลบพื้นหลังสไลด์โชว์หน้า Coming Soon ใช้พื้นสีเรียบแทน║
   ╚══════════════════════════════════════════════════════════╝
 -->
-<title>Walk Together : 7 Billion · v2.5</title>
+<title>Walk Together : 7 Billion · v2.8</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -597,7 +618,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
   <div style="padding-top:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
     <div>
       <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.4px">Admin</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.5</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Walk Together : 7 Billion · v2.8</div>
     </div>
     <button class="btn-ghost-sm" style="color:var(--muted);font-size:12px" onclick="document.getElementById('admin-exit-overlay').style.display='flex'">← ออก</button>
   </div>
@@ -877,7 +898,7 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   Walk Together : 7 Billion · v2.5
+   Walk Together : 7 Billion · v2.8
    v1.0: Rebrand จาก Engineering Synergy 2026 — 3 ฐาน PR/QA/QC
    v1.1: อัปเดตวันที่/เวลา/สถานที่จัดงาน
    v1.2: เชื่อมฐานข้อมูลใหม่ + ล้าง Engineering + survey จาก Sheet
@@ -896,8 +917,13 @@ body{font-family:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,sans-seri
    v2.4: toggle "มี Quiz"/"มีสแกนโบนัส" แยกอิสระต่อฐาน
    v2.5: QR bonus หลายตัวต่อฐาน (stepper ใน Admin) + คำถาม Survey
          แบบพิมพ์ตอบ (__TEXT__: ใน choice_a ของชีต survey)
+   v2.6: ตัด Top 3 คะแนนสูงสุดออกจากสถิติประจำฐาน (ซ้ำ Leaderboard)
+         + แก้บั๊กนับคนผ่านให้รองรับฐานที่ปิด Quiz (ใช้สแกนอย่างเดียว)
+   v2.7: แก้บั๊ก stuck state ล็อกฐานที่ Quiz จบแล้วแต่ยังไม่ได้สแกนโบนัส
+   v2.8: แก้บั๊ก QR Bonus grid ไม่รีเฟรชทันทีตอนปรับจำนวน QR
+         + กรองปุ่ม QR ตาม hasScan
 ═══════════════════════════════════════════════════════ */
-var APP_VERSION='2.5';
+var APP_VERSION='2.8';
 
 var API='https://script.google.com/macros/s/AKfycbzxWtgXFBi5D62V7GPu5vbzCeVrpKlOerJJ4TgOYxHuTyAVMCGsk8NviHj0yPAe2DYD/exec';
 /* [FIX-7] ADMIN_PASS ย้ายไปเก็บใน GAS backend แล้ว (verifyAdmin)
@@ -1534,13 +1560,17 @@ function isStationFullyDone(id){
 /* FIX-3e/3f + FIX-12 + v2.0(stuck): getStationState
    - disabled: ฐานที่ admin ปิด
    - done: ทำกิจกรรมที่เปิดใช้งานอยู่ครบแล้ว (ดู isStationFullyDone)
-   - stuck: เริ่มทำ Quiz ไปแล้วแต่ยังไม่จบ (เช่น refresh กลางคัน) — ต้องให้ Admin reset ถึงจะเข้าใหม่ได้
+   - stuck: เริ่มทำ Quiz ไปแล้วแต่ "ตัว Quiz เอง" ยังไม่จบ (เช่น refresh กลางคัน)
+     ต้องให้ Admin reset ถึงจะเข้าใหม่ได้
+     v2.7 FIX: เพิ่มเงื่อนไข !qzDoneMap[id] — เดิมเช็คแค่ "เคยเริ่ม Quiz ไหม" ไม่ได้เช็คว่า
+     Quiz จบหรือยัง ทำให้ฐานที่มีทั้ง Quiz+สแกนโบนัส พอทำ Quiz จบแล้วแต่ยังไม่ได้สแกน
+     ถูกล็อกว่า "ติดต่อเจ้าหน้าที่" ทั้งที่ Quiz เสร็จสมบูรณ์แล้ว ควรเข้าฐานไปสแกนโบนัสต่อได้
    - [FIX-12] free mode (quiz_free_mode=true): ทุกฐานที่เปิดอยู่ available พร้อมกัน
    - sequential mode: ต้องผ่านฐานก่อนหน้า (ข้ามฐานที่ปิด) */
 function getStationState(id){
   if(stationActive[id]===false)return 'disabled';
   if(isStationFullyDone(id))return 'done';
-  if(qzStartedMap&&qzStartedMap[id]&&stationHasQuiz[id]!==false)return 'stuck';
+  if(qzStartedMap&&qzStartedMap[id]&&stationHasQuiz[id]!==false&&!qzDoneMap[id])return 'stuck';
   /* [FIX-12] free mode — ทำฐานไหนก่อนก็ได้ */
   if(appSettings.quiz_free_mode)return 'available';
   /* sequential mode — ต้องผ่านฐานก่อนหน้า */
@@ -2025,7 +2055,7 @@ function renderStationActiveToggles(){
   });
   el.innerHTML=html;
 }
-function saveStationSettings_(){
+function saveStationSettings_(cb){
   var s={};QUIZ_ORDER.forEach(function(id){s[id]={
     points:parseInt((document.getElementById('pts-'+id)||{}).value)||1,
     bonus:parseInt((document.getElementById('bon-'+id)||{}).value)||0,
@@ -2034,7 +2064,7 @@ function saveStationSettings_(){
     hasScan:stationHasScan[id]!==false,
     bonusCount:stationBonusCount[id]||1
   };});
-  apiPost({action:'saveSettings',settings:s},function(){});
+  apiPost({action:'saveSettings',settings:s},function(res){if(typeof cb==='function')cb(res);});
 }
 function toggleStationActive(k,on){
   stationActive[k]=on;
@@ -2049,7 +2079,12 @@ function toggleStationActive(k,on){
 function toggleStationField(k,field,val){
   if(field==='hasQuiz')stationHasQuiz[k]=val;
   else if(field==='hasScan')stationHasScan[k]=val;
-  saveStationSettings_();
+  if(field==='hasScan'){
+    /* v2.8: rebuild QR grid ทันที เพราะตอนนี้กรองปุ่มตาม hasScan ด้วย */
+    saveStationSettings_(function(){adminQrBuilt=false;buildAdminQR();});
+  } else {
+    saveStationSettings_();
+  }
 }
 /* v2.5: changeBonusCount — ปรับจำนวน QR bonus ย่อยของฐาน (1-4) แล้วบันทึก + รีเซ็ต QR grid */
 function changeBonusCount(k,delta){
@@ -2057,8 +2092,15 @@ function changeBonusCount(k,delta){
   var next=Math.max(1,Math.min(4,cur+delta));
   stationBonusCount[k]=next;
   var el=document.getElementById('bc-count-'+k);if(el)el.textContent=next;
-  adminQrBuilt=false; /* บังคับให้ buildAdminQR วาด QR grid ใหม่ตามจำนวนล่าสุด */
-  saveStationSettings_();
+  /* v2.8 FIX: เดิมแค่ตั้ง adminQrBuilt=false เฉยๆ ซึ่งจะวาดใหม่ก็ต่อเมื่อสลับแท็บออก-เข้า
+     เท่านั้น ถ้าอยู่หน้าเดิมจะเห็น QR grid ค้างค่าเก่า (ทั้งที่ Sheet บันทึกถูกแล้ว)
+     แก้ให้เรียก buildAdminQR() วาดใหม่ทันทีหลังบันทึกเสร็จ (ผ่าน callback) */
+  showLoad();
+  saveStationSettings_(function(){
+    hideLoad();
+    adminQrBuilt=false;
+    buildAdminQR();
+  });
 }
 function loadStationStats(){
   var el=document.getElementById('station-stats');if(!el)return;
@@ -2068,16 +2110,31 @@ function loadStationStats(){
     var members=res.members||[];var total=members.length;
     /* FIX-2 (BUG-07): ใช้ QUIZ_ORDER (PR→QA→QC) ให้ตรงลำดับจริงที่ user เดิน
        เดิม hardcode ['EE','ME','TO','PM'] (4 ฐานเก่า) ตอนนี้ใช้ QUIZ_ORDER=['PR','QA','QC'] แทน */
-    var ORDER=QUIZ_ORDER;var medals=['#ffd700','#c0c0c0','#cd7f32'];var html='';
+    var ORDER=QUIZ_ORDER;var html='';
     ORDER.forEach(function(k){
-      /* FIX-4: ใช้ scoreKey() helper แทน hardcode k+'_quiz' */
-      var s=STATION_MAP[k];var passed=members.filter(function(m){return m.scores&&m.scores[scoreKey(k)];});var pct=total?Math.round(passed.length/total*100):0;
-      var sorted=passed.slice().sort(function(a,b){return b.total_score-a.total_score;});var top3=sorted.slice(0,3);
+      /* v2.6: นับ "คนผ่าน" จาก isStationFullyDone() แทนเช็คคะแนน quiz อย่างเดียว
+         เดิมฐานที่ปิด Quiz ไว้ (hasQuiz=false, ใช้สแกนอย่างเดียว) จะนับได้ 0 คนตลอด
+         ทั้งที่จริงมีคนสแกนรับโบนัสผ่านไปแล้ว — ต้องเช็คจาก scores ของสมาชิกแต่ละคนตรงๆ
+         (ไม่ใช้ helper isStationFullyDone ของ user ปัจจุบัน เพราะฟังก์ชันนั้นอ้างอิง state
+         ของผู้ใช้ที่ล็อกอินอยู่เท่านั้น ต้องคำนวณแยกต่อสมาชิกในลิสต์นี้) */
+      var s=STATION_MAP[k];
+      var needQuiz=stationHasQuiz[k]!==false, needScan=stationHasScan[k]!==false;
+      var bonusCount=stationBonusCount[k]||1;
+      var passed=members.filter(function(m){
+        var sc=m.scores||{};
+        var quizOk=!needQuiz||!!sc[scoreKey(k)];
+        var scanOk=true;
+        if(needScan){
+          var done=0;
+          for(var i=1;i<=bonusCount;i++){var bk=bonusCount>1?(k+'_bonus_'+i):(k+'_bonus');if(sc[bk]!==undefined)done++;}
+          scanOk=done>=bonusCount;
+        }
+        return quizOk&&scanOk;
+      });
+      var pct=total?Math.round(passed.length/total*100):0;
       html+='<div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;"><div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);"><div style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--bg2);">'+s.icon+'</div><div><div style="font-size:13px;font-weight:700;color:var(--navy);">ฐาน '+k+'</div><div style="font-size:10px;color:var(--muted);">'+s.name+'</div></div></div>';
       html+='<div style="padding:11px 14px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;"><div style="font-size:20px;font-weight:700;color:var(--navy);">'+passed.length+'</div><div style="font-size:12px;color:var(--sub);">คน / '+total+' คนทั้งหมด</div></div>';
-      html+='<div style="height:5px;background:var(--border);border-radius:3px;margin-bottom:12px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+s.color+';border-radius:3px;"></div></div>';
-      if(top3.length){html+='<div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">คะแนนสูงสุด 3 อันดับ</div>';top3.forEach(function(m,i){html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:'+(medals[i]||'#eef1f8')+';flex-shrink:0;">'+(i+1)+'</div><div style="flex:1;"><div style="font-size:13px;color:var(--navy);">'+m.full_name+'</div><div style="font-size:10px;color:var(--muted);">'+m.department+'</div></div><div style="font-size:13px;font-weight:700;color:var(--navy);">'+m.total_score+'</div></div>';});}
-      else{html+='<div style="font-size:12px;color:var(--muted);">ยังไม่มีผู้เข้าทำ</div>';}
+      html+='<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+s.color+';border-radius:3px;"></div></div>';
       html+='</div></div>';
     });
     el.innerHTML=html;
@@ -2088,6 +2145,8 @@ buildAdminQR=function(){
     var s=res.settings||{};var ORDER=['PR','QA','QC'];var html='';
     ORDER.forEach(function(k){
       var info=STATION_MAP[k];var bonus=(s[k]&&s[k].bonus!=null?s[k].bonus:0);
+      var hasScan=!s[k]||s[k].hasScan!==false; /* v2.8: ฐานที่ปิดสแกนโบนัสไว้ ไม่ต้องมี QR ให้กด */
+      if(!hasScan)return;
       var count=(s[k]&&s[k].bonusCount!=null?(parseInt(s[k].bonusCount)||1):1);
       /* v2.5: ฐานที่มี QR bonus มากกว่า 1 อัน สร้างปุ่มแยกกันต่อ QR (เช่น QA #1, QA #2) */
       for(var i=1;i<=count;i++){
@@ -2096,7 +2155,7 @@ buildAdminQR=function(){
         html+='<button onclick="showAdminQR(\''+k+'\','+sub+')" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;font-family:inherit;transition:.15s;" onmouseover="this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><div style="font-size:26px;margin-bottom:6px;">'+info.icon+'</div><div style="font-size:13px;font-weight:700;color:var(--navy);">'+label+'</div><div style="font-size:10px;color:var(--muted);margin-top:1px;">'+info.name+'</div><div style="font-size:10px;font-weight:700;color:var(--accent);background:var(--blue-light);border:1px solid #bfdbfe;border-radius:20px;padding:2px 8px;display:inline-block;margin-top:6px;">+'+bonus+' bonus</div></button>';
       }
     });
-    document.getElementById('adminQrGrid').innerHTML=html;adminQrBuilt=true;
+    document.getElementById('adminQrGrid').innerHTML=html||'<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px;grid-column:span 2">ไม่มีฐานที่เปิดสแกนโบนัส</div>';adminQrBuilt=true;
   });
 };
 var qrPopupInstance=null;
